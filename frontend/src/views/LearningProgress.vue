@@ -344,8 +344,10 @@ export default {
   },
   mounted() {
     this.initCharts()
+    window.addEventListener('resize', this.handleResize)
   },
   beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
     if (this.timeChartInstance) this.timeChartInstance.dispose()
     if (this.skillRadarInstance) this.skillRadarInstance.dispose()
   },
@@ -447,6 +449,11 @@ export default {
           ]
         }]
       })
+    },
+
+    handleResize() {
+      if (this.timeChartInstance) this.timeChartInstance.resize()
+      if (this.skillRadarInstance) this.skillRadarInstance.resize()
     },
 
     getProgressColor(percentage) {
