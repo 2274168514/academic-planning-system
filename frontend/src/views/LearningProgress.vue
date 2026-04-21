@@ -557,16 +557,6 @@ export default {
   width: 100%;
 }
 
-.chart-placeholder {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
 .skill-legend {
   display: flex;
   justify-content: center;
