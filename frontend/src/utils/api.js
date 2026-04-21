@@ -67,9 +67,12 @@ const courseApi = {
 
 // 学业规划相关API
 const planningApi = {
-  getSemesterPlan: (semesterId) => api.get(`/planning/semester/${semesterId}`),
-  addCourseToSemester: (semesterId, data) => api.post(`/planning/semester/${semesterId}/courses`, data),
-  removeCourse: (semesterId, courseId) => api.delete(`/planning/semester/${semesterId}/courses/${courseId}`)
+  getPlans: () => api.get('/study_plans'),
+  createPlan: (data) => api.post('/study_plans', data),
+  getPlan: (id) => api.get(`/study_plans/${id}`),
+  deletePlan: (id) => api.delete(`/study_plans/${id}`),
+  addDetail: (planId, data) => api.post(`/study_plans/${planId}/details`, data),
+  removeDetail: (planId, detailId) => api.delete(`/study_plans/${planId}/details/${detailId}`)
 }
 
 // 学习进度相关API
