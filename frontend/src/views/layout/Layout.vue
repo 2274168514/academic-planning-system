@@ -1,69 +1,69 @@
-﻿<template>
+<template>
   <div class="layout-container">
     <div class="sidebar">
       <div class="logo">
-        <h2>学习助手</h2>
+        <el-icon class="logo-icon"><Collection /></el-icon>
+        <span class="logo-text">学业规划</span>
       </div>
-      <div class="menu">
-        <router-link to="/" class="menu-item" exact>
-          <i class="el-icon-s-home"></i>
+      <nav class="menu">
+        <router-link to="/" class="menu-item" exact-active-class="active">
+          <el-icon><House /></el-icon>
           <span>首页</span>
         </router-link>
-        <router-link to="/courses" class="menu-item">
-          <i class="el-icon-reading"></i>
-          <span>课程</span>
+        <router-link to="/courses" class="menu-item" active-class="active">
+          <el-icon><Reading /></el-icon>
+          <span>课程中心</span>
         </router-link>
-        <router-link to="/knowledge-graph" class="menu-item">
-          <i class="el-icon-share"></i>
+        <router-link to="/knowledge-graph" class="menu-item" active-class="active">
+          <el-icon><Share /></el-icon>
           <span>知识图谱</span>
         </router-link>
-        <router-link to="/career-path" class="menu-item">
-          <i class="el-icon-guide"></i>
+        <router-link to="/career-path" class="menu-item" active-class="active">
+          <el-icon><Compass /></el-icon>
           <span>职业路径</span>
         </router-link>
-        <router-link to="/academic-planning" class="menu-item">
-          <i class="el-icon-s-order"></i>
+        <router-link to="/academic-planning" class="menu-item" active-class="active">
+          <el-icon><Calendar /></el-icon>
           <span>学业规划</span>
         </router-link>
-        <router-link to="/ai-assistant" class="menu-item">
-          <i class="el-icon-s-opportunity"></i>
-          <span>AI助手</span>
+        <router-link to="/ai-assistant" class="menu-item" active-class="active">
+          <el-icon><ChatDotRound /></el-icon>
+          <span>AI 助手</span>
         </router-link>
-        <router-link to="/learning-progress" class="menu-item">
-          <i class="el-icon-data-line"></i>
+        <router-link to="/learning-progress" class="menu-item" active-class="active">
+          <el-icon><TrendCharts /></el-icon>
           <span>学习进度</span>
         </router-link>
-        <router-link to="/profile" class="menu-item">
-          <i class="el-icon-user"></i>
+        <router-link to="/profile" class="menu-item" active-class="active">
+          <el-icon><UserFilled /></el-icon>
           <span>个人中心</span>
         </router-link>
-      </div>
+      </nav>
     </div>
+
     <div class="main-content">
-      <div class="header">
+      <header class="header">
         <div class="header-left">
-          <i class="el-icon-menu toggle-sidebar"></i>
-          <div class="breadcrumb">{{getCurrentRouteName()}}</div>
+          <span class="page-title">{{ getCurrentRouteName() }}</span>
         </div>
         <div class="header-right">
-          <div class="user-info">
-            <i class="el-icon-bell notification-icon"></i>
-            <span class="username">{{username}}</span>
-            <el-dropdown @command="handleCommand">
-              <span class="el-dropdown-link">
-                <i class="el-icon-arrow-down"></i>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-                  <el-dropdown-item command="settings">设置</el-dropdown-item>
-                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
+          <el-icon class="header-icon"><Bell /></el-icon>
+          <div class="user-avatar">{{ avatarLetter }}</div>
+          <el-dropdown @command="handleCommand">
+            <div class="user-name-wrap">
+              <span class="username">{{ username }}</span>
+              <el-icon class="arrow-icon"><ArrowDown /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
-      </div>
+      </header>
+
       <div class="content">
         <router-view />
       </div>
@@ -73,16 +73,29 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import {
+  House, Collection, Reading, Share, Compass,
+  Calendar, ChatDotRound, TrendCharts, UserFilled,
+  Bell, ArrowDown
+} from '@element-plus/icons-vue'
 
 export default {
-  name: "Layout",
+  name: 'Layout',
+  components: {
+    House, Collection, Reading, Share, Compass,
+    Calendar, ChatDotRound, TrendCharts, UserFilled,
+    Bell, ArrowDown
+  },
   data() {
     return {
       username: '学习者'
     }
   },
   computed: {
-    ...mapGetters(['userInfo'])
+    ...mapGetters(['userInfo']),
+    avatarLetter() {
+      return this.username ? this.username[0].toUpperCase() : 'U'
+    }
   },
   methods: {
     getCurrentRouteName() {
@@ -101,137 +114,171 @@ export default {
 </script>
 
 <style scoped>
+* { box-sizing: border-box; }
+
 .layout-container {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
+/* ── 侧边栏 ── */
 .sidebar {
-  width: 240px;
-  background-color: #304156;
-  color: white;
-  height: 100%;
+  width: 220px;
+  background: #0f172a;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  flex-shrink: 0;
 }
 
 .logo {
-  height: 60px;
+  height: 64px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 10px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.logo h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+.logo-icon {
+  font-size: 22px;
+  color: #38bdf8;
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
 }
 
 .menu {
   flex: 1;
-  padding: 15px 0;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   overflow-y: auto;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  color: rgba(255, 255, 255, 0.7);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
   text-decoration: none;
-  transition: all 0.3s;
+  font-size: 14px;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
 }
 
-.menu-item i {
-  margin-right: 10px;
-  font-size: 18px;
+.menu-item .el-icon {
+  font-size: 17px;
+  flex-shrink: 0;
 }
 
-.menu-item:hover, .menu-item.router-link-active {
-  background-color: #263445;
-  color: #409EFF;
+.menu-item:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.06);
 }
 
+.menu-item.active {
+  color: #38bdf8;
+  background: rgba(56,189,248,0.1);
+  border-left-color: #38bdf8;
+}
+
+/* ── 主内容 ── */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f0f2f5;
+  background: #f1f5f9;
   overflow: hidden;
+  min-width: 0;
 }
 
+/* ── 顶栏 ── */
 .header {
-  height: 60px;
-  background-color: white;
+  height: 64px;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  padding: 0 28px;
+  box-shadow: 0 1px 0 #e2e8f0;
+  flex-shrink: 0;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.toggle-sidebar {
-  font-size: 20px;
-  margin-right: 20px;
-  cursor: pointer;
-}
-
-.breadcrumb {
+.page-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 20px;
 }
 
-.user-info {
+.header-icon {
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.header-icon:hover {
+  color: #0f172a;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.notification-icon {
-  font-size: 18px;
-  margin-right: 20px;
+.user-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
 }
 
 .username {
-  margin-right: 8px;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
 }
 
-.el-dropdown-link {
-  cursor: pointer;
+.arrow-icon {
+  font-size: 12px;
+  color: #9ca3af;
 }
 
+/* ── 内容区 ── */
 .content {
   flex: 1;
-  padding: 20px;
+  padding: 24px;
   overflow-y: auto;
 }
 
-/* 响应式布局 */
+/* 响应式 */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 64px;
-  }
-  
-  .menu-item span {
-    display: none;
-  }
-  
-  .logo h2 {
-    display: none;
-  }
+  .sidebar { width: 64px; }
+  .menu-item span, .logo-text { display: none; }
+  .logo { justify-content: center; padding: 0; }
+  .menu-item { justify-content: center; border-left: none; border-radius: 8px; }
+  .menu-item.active { border-left: none; }
 }
 </style>
