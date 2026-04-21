@@ -51,10 +51,7 @@
               </el-option>
             </el-select>
           </div>
-          <div class="time-chart" ref="timeChart">
-            <!-- 这里将渲染学习时间图表 -->
-            <div class="chart-placeholder">时间分布图表</div>
-          </div>
+          <div class="time-chart" ref="timeChart"></div>
           <div class="card-footer time-stats">
             <div class="stat-item">
               <div class="value">26.5</div>
@@ -79,10 +76,7 @@
               </el-option>
             </el-select>
           </div>
-          <div class="skill-radar" ref="skillRadar">
-            <!-- 这里将渲染技能雷达图 -->
-            <div class="chart-placeholder">技能雷达图</div>
-          </div>
+          <div class="skill-radar" ref="skillRadar"></div>
           <div class="card-footer">
             <div class="skill-legend">
               <div class="legend-item">
@@ -182,6 +176,8 @@
 </template>
 
 <script>
+import * as echarts from 'echarts'
+
 export default {
   name: "LearningProgress",
   data() {
@@ -306,7 +302,14 @@ export default {
           progress: 8,
           target: 10
         }
-      ]
+      ],
+      timeChartInstance: null,
+      skillRadarInstance: null,
+      weeklyStudyData: {
+        week: [2.5, 3.0, 1.5, 4.0, 2.0, 3.5, 2.5],
+        month: [18, 22, 15, 28, 20, 25, 19, 24, 16, 28, 21, 26, 18, 22, 17, 29, 23, 27, 20, 25, 18, 24, 16, 28, 21, 26, 19, 22, 17, 25],
+        semester: [85, 92, 78, 96, 88, 94, 82, 90, 76, 95, 86, 91, 79, 97, 87]
+      },
     }
   },
   computed: {
@@ -334,14 +337,118 @@ export default {
       }
     }
   },
+  watch: {
+    selectedTimeRange() {
+      if (this.timeChartInstance) this.renderTimeChart()
+    }
+  },
   mounted() {
-    this.initCharts();
+    this.initCharts()
+  },
+  beforeUnmount() {
+    if (this.timeChartInstance) this.timeChartInstance.dispose()
+    if (this.skillRadarInstance) this.skillRadarInstance.dispose()
   },
   methods: {
     initCharts() {
-      console.log('初始化图表');
-      // 在这里使用echarts或其他图表库初始化时间图表和技能雷达图
+      this.$nextTick(() => {
+        this.initTimeChart()
+        this.initSkillRadar()
+      })
     },
+
+    initTimeChart() {
+      const el = this.$refs.timeChart
+      if (!el) return
+      if (this.timeChartInstance) this.timeChartInstance.dispose()
+      this.timeChartInstance = echarts.init(el)
+      this.renderTimeChart()
+    },
+
+    renderTimeChart() {
+      const rangeMap = {
+        week: { data: this.weeklyStudyData.week, labels: ['周一','周二','周三','周四','周五','周六','周日'] },
+        month: { data: this.weeklyStudyData.month, labels: Array.from({length: 30}, (_, i) => `${i+1}日`) },
+        semester: { data: this.weeklyStudyData.semester, labels: Array.from({length: 15}, (_, i) => `第${i+1}周`) }
+      }
+      const { data, labels } = rangeMap[this.selectedTimeRange] || rangeMap.week
+      this.timeChartInstance.setOption({
+        tooltip: { trigger: 'axis', formatter: '{b}: {c} 小时' },
+        grid: { left: '10%', right: '5%', top: '10%', bottom: '15%' },
+        xAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { fontSize: 11, color: '#666' }
+        },
+        yAxis: {
+          type: 'value',
+          name: '小时',
+          nameTextStyle: { color: '#999', fontSize: 11 },
+          axisLabel: { color: '#666' }
+        },
+        series: [{
+          type: 'bar',
+          data: data,
+          barMaxWidth: 32,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#409EFF' },
+              { offset: 1, color: '#a0cfff' }
+            ]),
+            borderRadius: [4, 4, 0, 0]
+          }
+        }]
+      })
+    },
+
+    initSkillRadar() {
+      const el = this.$refs.skillRadar
+      if (!el) return
+      if (this.skillRadarInstance) this.skillRadarInstance.dispose()
+      this.skillRadarInstance = echarts.init(el)
+      this.skillRadarInstance.setOption({
+        tooltip: {},
+        legend: {
+          data: ['当前水平', '目标水平'],
+          bottom: 0,
+          textStyle: { fontSize: 12, color: '#666' }
+        },
+        radar: {
+          indicator: [
+            { name: '编程能力', max: 100 },
+            { name: '算法基础', max: 100 },
+            { name: '系统知识', max: 100 },
+            { name: '网络协议', max: 100 },
+            { name: '数据库', max: 100 },
+            { name: '软件工程', max: 100 }
+          ],
+          radius: '65%',
+          splitNumber: 4,
+          axisName: { color: '#555', fontSize: 12 },
+          splitArea: { areaStyle: { color: ['rgba(64,158,255,0.02)', 'rgba(64,158,255,0.05)'] } }
+        },
+        series: [{
+          type: 'radar',
+          data: [
+            {
+              value: [80, 65, 70, 55, 75, 60],
+              name: '当前水平',
+              itemStyle: { color: '#409EFF' },
+              areaStyle: { color: 'rgba(64,158,255,0.2)' },
+              lineStyle: { width: 2 }
+            },
+            {
+              value: [90, 85, 80, 80, 90, 80],
+              name: '目标水平',
+              itemStyle: { color: '#909399' },
+              areaStyle: { color: 'rgba(144,147,153,0.1)' },
+              lineStyle: { width: 2, type: 'dashed' }
+            }
+          ]
+        }]
+      })
+    },
+
     getProgressColor(percentage) {
       if (percentage < 30) return '#F56C6C';
       if (percentage < 70) return '#E6A23C';
