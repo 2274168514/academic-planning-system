@@ -342,7 +342,11 @@ export default {
         this.plans = res.plans || []
         if (this.plans.length && !this.currentPlanId) {
           this.currentPlanId = this.plans[0].plan_id
-          await this.loadPlanDetails()
+          try {
+            await this.loadPlanDetails()
+          } catch (e) {
+            this.$message.error('加载计划详情失败')
+          }
         }
       } catch (e) {
         this.$message.error('加载计划列表失败')
