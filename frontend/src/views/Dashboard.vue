@@ -1,289 +1,342 @@
 <template>
-  <div class="dashboard-container">
-    <h1 class="page-title">学习仪表盘</h1>
-    
-    <div class="data-overview">
-      <div class="data-card">
-        <div class="card-icon" style="background-color: #1890ff;">
-          <i class="el-icon-reading"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">我的课程</div>
-          <div class="card-value">6<span class="card-unit">门</span></div>
-          <div class="card-desc">当前学期课程</div>
-        </div>
+  <div class="dashboard">
+    <!-- 欢迎区 -->
+    <div class="welcome-bar">
+      <div>
+        <div class="welcome-title">{{ greeting }}，{{ username }}</div>
+        <div class="welcome-date">{{ currentDate }}</div>
       </div>
-      
-      <div class="data-card">
-        <div class="card-icon" style="background-color: #52c41a;">
-          <i class="el-icon-document-checked"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">学习进度</div>
-          <div class="card-value">78<span class="card-unit">%</span></div>
-          <div class="card-desc">整体完成度</div>
-        </div>
-      </div>
-      
-      <div class="data-card">
-        <div class="card-icon" style="background-color: #faad14;">
-          <i class="el-icon-trophy"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">掌握技能</div>
-          <div class="card-value">24<span class="card-unit">项</span></div>
-          <div class="card-desc">关键技能点</div>
-        </div>
-      </div>
-      
-      <div class="data-card">
-        <div class="card-icon" style="background-color: #f5222d;">
-          <i class="el-icon-alarm-clock"></i>
-        </div>
-        <div class="card-content">
-          <div class="card-title">学习时长</div>
-          <div class="card-value">127<span class="card-unit">小时</span></div>
-          <div class="card-desc">本学期总计</div>
+      <el-button type="primary" size="small" plain @click="$router.push('/academic-planning')">
+        查看学习计划
+      </el-button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stat-grid">
+      <div class="stat-card" v-for="card in statCards" :key="card.title">
+        <div class="stat-top" :style="{ background: card.color }"></div>
+        <div class="stat-body">
+          <div class="stat-header">
+            <span class="stat-label">{{ card.title }}</span>
+            <el-icon class="stat-icon" :style="{ color: card.color }">
+              <component :is="card.icon" />
+            </el-icon>
+          </div>
+          <div class="stat-value">
+            {{ card.value }}<span class="stat-unit">{{ card.unit }}</span>
+          </div>
+          <div class="stat-trend" :class="card.trendType">
+            {{ card.trend }}
+          </div>
         </div>
       </div>
     </div>
-    
-    <div class="chart-section">
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3>课程学习进度</h3>
+
+    <!-- 图表区 -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="card-head">
+          <span class="card-head-title">课程学习进度</span>
+          <el-tag size="small" type="info">本学期</el-tag>
         </div>
-        <div class="chart-placeholder" ref="progressChart">
-          <!-- 这里将通过echarts生成图表 -->
-          图表加载中...
-        </div>
+        <div ref="progressChart" class="chart-box"></div>
       </div>
-      
-      <div class="chart-container">
-        <div class="chart-header">
-          <h3>知识点分布</h3>
+
+      <div class="chart-card">
+        <div class="card-head">
+          <span class="card-head-title">学分分布</span>
+          <el-tag size="small" type="info">全部</el-tag>
         </div>
-        <div class="chart-placeholder" ref="knowledgeChart">
-          <!-- 这里将通过echarts生成图表 -->
-          图表加载中...
-        </div>
+        <div ref="distChart" class="chart-box"></div>
       </div>
     </div>
-    
-    <div class="recent-section">
-      <h2 class="section-title">最近学习活动</h2>
-      <div class="activity-list">
-        <div class="activity-item">
-          <div class="activity-time">今天 14:30</div>
-          <div class="activity-content">
-            <div class="activity-title">完成《数据结构》第5章课程学习</div>
-            <div class="activity-desc">已掌握二叉树相关知识点</div>
-          </div>
-        </div>
-        
-        <div class="activity-item">
-          <div class="activity-time">昨天 10:15</div>
-          <div class="activity-content">
-            <div class="activity-title">参与《软件工程》在线讨论</div>
-            <div class="activity-desc">发表3条讨论内容，获得5个点赞</div>
-          </div>
-        </div>
-        
-        <div class="activity-item">
-          <div class="activity-time">2天前</div>
-          <div class="activity-content">
-            <div class="activity-title">提交《计算机网络》实验报告</div>
-            <div class="activity-desc">HTTP协议分析实验，得分94分</div>
-          </div>
-        </div>
+
+    <!-- 最近活动 -->
+    <div class="activity-card">
+      <div class="card-head">
+        <span class="card-head-title">最近学习动态</span>
       </div>
+      <el-timeline>
+        <el-timeline-item
+          v-for="item in activities"
+          :key="item.time"
+          :timestamp="item.time"
+          :color="item.color"
+          placement="top"
+        >
+          <div class="timeline-content">
+            <div class="timeline-title">{{ item.title }}</div>
+            <div class="timeline-desc">{{ item.desc }}</div>
+          </div>
+        </el-timeline-item>
+      </el-timeline>
     </div>
   </div>
 </template>
 
 <script>
+import * as echarts from 'echarts'
+import {
+  Reading, TrendCharts, Trophy, AlarmClock
+} from '@element-plus/icons-vue'
+
 export default {
-  name: "Dashboard",
+  name: 'Dashboard',
+  components: { Reading, TrendCharts, Trophy, AlarmClock },
   data() {
+    const hour = new Date().getHours()
+    const greeting = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
+    const now = new Date()
+    const currentDate = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月 ${now.getDate()} 日，${['周日','周一','周二','周三','周四','周五','周六'][now.getDay()]}`
+
     return {
-      // 可以添加仪表盘数据
+      greeting,
+      currentDate,
+      username: '同学',
+      chartInstances: [],
+      statCards: [
+        { title: '我的课程', value: 6, unit: '门', trend: '较上学期 +1', trendType: 'up', color: '#0ea5e9', icon: 'Reading' },
+        { title: '学习进度', value: 78, unit: '%', trend: '较上周 +3%', trendType: 'up', color: '#10b981', icon: 'TrendCharts' },
+        { title: '掌握技能', value: 24, unit: '项', trend: '本月新增 4 项', trendType: 'up', color: '#f59e0b', icon: 'Trophy' },
+        { title: '学习时长', value: 127, unit: 'h', trend: '本学期累计', trendType: 'neutral', color: '#ef4444', icon: 'AlarmClock' }
+      ],
+      activities: [
+        { time: '今天 14:30', title: '完成《数据结构》第5章学习', desc: '已掌握二叉树相关知识点', color: '#10b981' },
+        { time: '昨天 10:15', title: '参与《软件工程》在线讨论', desc: '发表3条讨论内容，获得5个点赞', color: '#0ea5e9' },
+        { time: '2天前 16:00', title: '提交《计算机网络》实验报告', desc: 'HTTP协议分析实验，得分94分', color: '#f59e0b' },
+        { time: '3天前 09:00', title: '完成算法设计第3章习题', desc: '动态规划相关题目，正确率 88%', color: '#8b5cf6' }
+      ]
     }
   },
   mounted() {
-    // 这里可以初始化图表
-    this.initCharts();
+    this.$nextTick(() => {
+      this.initProgressChart()
+      this.initDistChart()
+      window.addEventListener('resize', this.handleResize)
+    })
+  },
+  beforeUnmount() {
+    this.chartInstances.forEach(c => c.dispose())
+    window.removeEventListener('resize', this.handleResize)
   },
   methods: {
-    initCharts() {
-      // 初始化echarts的方法
-      console.log('初始化图表');
-      // 此处应该有echarts的初始化代码
-      // 如果项目中已经集成了echarts，可以实现具体的图表
+    handleResize() {
+      this.chartInstances.forEach(c => c.resize())
+    },
+
+    initProgressChart() {
+      const el = this.$refs.progressChart
+      if (!el) return
+      const chart = echarts.init(el)
+      this.chartInstances.push(chart)
+      chart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: {c}%' },
+        grid: { left: 16, right: 48, top: 12, bottom: 12, containLabel: true },
+        xAxis: {
+          type: 'value', max: 100,
+          axisLabel: { formatter: '{value}%', color: '#94a3b8', fontSize: 11 },
+          splitLine: { lineStyle: { color: '#f1f5f9' } }
+        },
+        yAxis: {
+          type: 'category',
+          data: ['软件工程', '计算机网络', '操作系统', '数据结构', '数据库系统'],
+          axisLabel: { color: '#64748b', fontSize: 12 },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          data: [
+            { value: 90, itemStyle: { color: '#10b981' } },
+            { value: 62, itemStyle: { color: '#0ea5e9' } },
+            { value: 45, itemStyle: { color: '#f59e0b' } },
+            { value: 85, itemStyle: { color: '#10b981' } },
+            { value: 75, itemStyle: { color: '#0ea5e9' } }
+          ],
+          barMaxWidth: 18,
+          itemStyle: { borderRadius: [0, 6, 6, 0] },
+          label: { show: true, position: 'right', color: '#64748b', fontSize: 11, formatter: '{c}%' }
+        }]
+      })
+    },
+
+    initDistChart() {
+      const el = this.$refs.distChart
+      if (!el) return
+      const chart = echarts.init(el)
+      this.chartInstances.push(chart)
+      chart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} 学分 ({d}%)' },
+        legend: {
+          orient: 'vertical', right: '8%', top: 'center',
+          textStyle: { color: '#64748b', fontSize: 12 },
+          itemWidth: 10, itemHeight: 10
+        },
+        series: [{
+          type: 'pie',
+          radius: ['42%', '68%'],
+          center: ['38%', '50%'],
+          data: [
+            { value: 60, name: '专业必修', itemStyle: { color: '#0ea5e9' } },
+            { value: 24, name: '专业选修', itemStyle: { color: '#10b981' } },
+            { value: 36, name: '通识教育', itemStyle: { color: '#f59e0b' } },
+            { value: 40, name: '实践环节', itemStyle: { color: '#6366f1' } }
+          ],
+          itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          emphasis: { scale: true, scaleSize: 6 }
+        }]
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-.dashboard-container {
-  padding: 20px;
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.page-title {
-  margin-bottom: 24px;
-  font-size: 24px;
-  color: #333;
+/* 欢迎区 */
+.welcome-bar {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.data-overview {
+.welcome-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.welcome-date {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* 统计卡片 */
+.stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 16px;
 }
 
-.data-card {
-  background: white;
-  border-radius: 4px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  display: flex;
+.stat-card {
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.card-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+.stat-top {
+  height: 4px;
+}
+
+.stat-body {
+  padding: 16px 20px 18px;
+}
+
+.stat-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  color: white;
-  font-size: 24px;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.card-content {
-  flex: 1;
-}
-
-.card-title {
-  color: #666;
-  font-size: 14px;
-}
-
-.card-value {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 8px 0;
-  color: #333;
-}
-
-.card-unit {
-  font-size: 14px;
-  margin-left: 4px;
-  font-weight: normal;
-}
-
-.card-desc {
-  color: #999;
+.stat-label {
   font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
-.chart-section {
+.stat-icon {
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-left: 3px;
+}
+
+.stat-trend {
+  font-size: 12px;
+}
+
+.stat-trend.up { color: #10b981; }
+.stat-trend.down { color: #ef4444; }
+.stat-trend.neutral { color: #94a3b8; }
+
+/* 图表区 */
+.chart-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.chart-container {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  padding: 15px;
+.chart-card, .activity-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.chart-header {
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 10px;
-  margin-bottom: 15px;
-}
-
-.chart-header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.chart-placeholder {
-  height: 300px;
+.card-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: #999;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-.section-title {
-  font-size: 18px;
-  margin-bottom: 15px;
+.card-head-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
-.activity-list {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+.chart-box {
+  height: 220px;
 }
 
-.activity-item {
-  display: flex;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.activity-item:last-child {
-  border-bottom: none;
-}
-
-.activity-time {
-  width: 120px;
-  color: #666;
-}
-
-.activity-content {
-  flex: 1;
-}
-
-.activity-title {
-  font-weight: 500;
-  margin-bottom: 5px;
-}
-
-.activity-desc {
-  color: #666;
+/* 时间线 */
+.timeline-title {
   font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 4px;
 }
 
-/* 响应式布局 */
+.timeline-desc {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* 响应式 */
 @media (max-width: 1200px) {
-  .data-overview {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .chart-section {
-    grid-template-columns: 1fr;
-  }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
-  .data-overview {
-    grid-template-columns: 1fr;
-  }
-  
-  .activity-item {
-    flex-direction: column;
-  }
-  
-  .activity-time {
-    margin-bottom: 8px;
-  }
+  .stat-grid { grid-template-columns: 1fr; }
+  .welcome-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
 }
 </style>
