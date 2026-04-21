@@ -201,6 +201,198 @@ import {
 
 const BASE_URL = 'http://localhost:5000'
 
+// 展开节点的 mock 知识点/技能数据（API 返回空时降级使用）
+const MOCK_EXPAND = {
+  CS101: {
+    nodes: [
+      { id: 'kp_cs101_1', label: '计算机基本概念', content: '介绍冯·诺依曼体系结构、CPU、内存、I/O等核心概念。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs101_2', label: '二进制与数制', content: '二进制、八进制、十六进制的相互转换及运算规则。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs101_3', label: '计算机组成原理', content: '运算器、控制器、存储器、输入输出设备的协同工作原理。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs101_1', label: '计算机操作基础', description: '能够熟练使用操作系统及常用软件工具。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS101', to: 'kp_cs101_1', relation: 'CONTAINS' },
+      { from: 'CS101', to: 'kp_cs101_2', relation: 'CONTAINS' },
+      { from: 'CS101', to: 'kp_cs101_3', relation: 'CONTAINS' },
+      { from: 'CS101', to: 'skill_cs101_1', relation: 'BUILDS' }
+    ]
+  },
+  CS102: {
+    nodes: [
+      { id: 'kp_cs102_1', label: '变量与数据类型', content: '整型、浮点型、字符型等基本数据类型及其内存表示。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs102_2', label: '控制流程', content: '顺序、分支（if/switch）、循环（for/while）结构的程序设计。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs102_3', label: '函数与递归', content: '函数定义、参数传递、作用域及递归算法的设计原则。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs102_1', label: 'C/C++ 编程', description: '能够用 C/C++ 编写完整的结构化程序。', node_type: 'Skill' },
+      { id: 'skill_cs102_2', label: '逻辑思维', description: '将实际问题抽象为算法步骤并用代码实现。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS102', to: 'kp_cs102_1', relation: 'CONTAINS' },
+      { from: 'CS102', to: 'kp_cs102_2', relation: 'CONTAINS' },
+      { from: 'CS102', to: 'kp_cs102_3', relation: 'CONTAINS' },
+      { from: 'CS102', to: 'skill_cs102_1', relation: 'BUILDS' },
+      { from: 'CS102', to: 'skill_cs102_2', relation: 'BUILDS' }
+    ]
+  },
+  CS201: {
+    nodes: [
+      { id: 'kp_cs201_1', label: '线性表与链表', content: '顺序表与链表的存储结构、增删查改操作及时间复杂度分析。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs201_2', label: '栈与队列', content: '栈的LIFO特性、队列的FIFO特性及其在表达式求值中的应用。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs201_3', label: '树与二叉树', content: '二叉树的遍历（前/中/后序）、平衡树、堆的构造与维护。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs201_4', label: '图论基础', content: '图的邻接表/矩阵表示、DFS/BFS、最短路径（Dijkstra/Floyd）。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs201_1', label: '数据结构设计', description: '根据问题特点选择合适的数据结构并分析性能。', node_type: 'Skill' },
+      { id: 'skill_cs201_2', label: '算法分析', description: '计算时间复杂度与空间复杂度，进行渐进分析。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS201', to: 'kp_cs201_1', relation: 'CONTAINS' },
+      { from: 'CS201', to: 'kp_cs201_2', relation: 'CONTAINS' },
+      { from: 'CS201', to: 'kp_cs201_3', relation: 'CONTAINS' },
+      { from: 'CS201', to: 'kp_cs201_4', relation: 'CONTAINS' },
+      { from: 'CS201', to: 'skill_cs201_1', relation: 'BUILDS' },
+      { from: 'CS201', to: 'skill_cs201_2', relation: 'BUILDS' }
+    ]
+  },
+  CS301: {
+    nodes: [
+      { id: 'kp_cs301_1', label: '分治策略', content: '将问题分解为子问题递归求解，归并排序、快速排序等经典应用。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs301_2', label: '动态规划', content: '最优子结构与重叠子问题的识别，状态转移方程的建立。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs301_3', label: '贪心算法', content: '贪心选择性质的证明，最小生成树（Kruskal/Prim）及活动选择问题。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs301_1', label: '算法设计', description: '针对不同问题类型选择合适的算法范式并实现。', node_type: 'Skill' },
+      { id: 'skill_cs301_2', label: '竞赛编程', description: '在时间限制下快速实现正确高效的算法解题。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS301', to: 'kp_cs301_1', relation: 'CONTAINS' },
+      { from: 'CS301', to: 'kp_cs301_2', relation: 'CONTAINS' },
+      { from: 'CS301', to: 'kp_cs301_3', relation: 'CONTAINS' },
+      { from: 'CS301', to: 'skill_cs301_1', relation: 'BUILDS' },
+      { from: 'CS301', to: 'skill_cs301_2', relation: 'BUILDS' }
+    ]
+  },
+  CS302: {
+    nodes: [
+      { id: 'kp_cs302_1', label: '进程管理', content: '进程状态转换、调度算法（FCFS/SJF/RR）、死锁检测与预防。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs302_2', label: '内存管理', content: '分页与分段机制、虚拟内存、页面置换算法（LRU/FIFO/OPT）。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs302_3', label: '文件系统', content: 'FAT、inode文件组织方式，目录结构与磁盘调度算法。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs302_1', label: '系统编程', description: '使用 POSIX API 进行进程、线程、信号的编程。', node_type: 'Skill' },
+      { id: 'skill_cs302_2', label: '并发控制', description: '使用互斥锁、信号量解决临界区问题及生产者-消费者问题。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS302', to: 'kp_cs302_1', relation: 'CONTAINS' },
+      { from: 'CS302', to: 'kp_cs302_2', relation: 'CONTAINS' },
+      { from: 'CS302', to: 'kp_cs302_3', relation: 'CONTAINS' },
+      { from: 'CS302', to: 'skill_cs302_1', relation: 'BUILDS' },
+      { from: 'CS302', to: 'skill_cs302_2', relation: 'BUILDS' }
+    ]
+  },
+  CS303: {
+    nodes: [
+      { id: 'kp_cs303_1', label: 'TCP/IP 协议栈', content: '五层模型各层职责、IP寻址与子网划分、TCP三次握手与四次挥手。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs303_2', label: 'HTTP 协议', content: 'HTTP/1.1、HTTP/2 的报文格式、状态码、Cookie/Session机制。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs303_3', label: '路由与交换', content: 'RIP/OSPF路由协议、VLAN划分、ARP/DHCP工作原理。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs303_1', label: 'Socket 编程', description: '使用 Socket API 实现 TCP/UDP 客户端与服务端通信。', node_type: 'Skill' },
+      { id: 'skill_cs303_2', label: '网络调试', description: '使用 Wireshark、curl、ping 等工具分析网络问题。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS303', to: 'kp_cs303_1', relation: 'CONTAINS' },
+      { from: 'CS303', to: 'kp_cs303_2', relation: 'CONTAINS' },
+      { from: 'CS303', to: 'kp_cs303_3', relation: 'CONTAINS' },
+      { from: 'CS303', to: 'skill_cs303_1', relation: 'BUILDS' },
+      { from: 'CS303', to: 'skill_cs303_2', relation: 'BUILDS' }
+    ]
+  },
+  CS304: {
+    nodes: [
+      { id: 'kp_cs304_1', label: '关系模型与SQL', content: '关系代数、SQL DDL/DML/DCL语句、多表连接与子查询。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs304_2', label: '规范化理论', content: '函数依赖、1NF/2NF/3NF/BCNF的定义及模式分解方法。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs304_3', label: '事务与并发', content: 'ACID特性、隔离级别、死锁处理、MVCC并发控制机制。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs304_1', label: 'SQL 查询', description: '编写复杂 SQL 进行多表关联分析与性能调优。', node_type: 'Skill' },
+      { id: 'skill_cs304_2', label: '数据库设计', description: '根据需求进行 ER 建模并转化为关系模式。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS304', to: 'kp_cs304_1', relation: 'CONTAINS' },
+      { from: 'CS304', to: 'kp_cs304_2', relation: 'CONTAINS' },
+      { from: 'CS304', to: 'kp_cs304_3', relation: 'CONTAINS' },
+      { from: 'CS304', to: 'skill_cs304_1', relation: 'BUILDS' },
+      { from: 'CS304', to: 'skill_cs304_2', relation: 'BUILDS' }
+    ]
+  },
+  CS401: {
+    nodes: [
+      { id: 'kp_cs401_1', label: '需求工程', content: '用例建模、用户故事、需求追踪矩阵的编写规范与方法。', difficulty: '简单', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs401_2', label: '设计模式', content: '23种GoF设计模式：创建型、结构型、行为型的应用场景。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs401_3', label: '软件测试', content: '单元测试、集成测试、黑盒/白盒测试方法及测试驱动开发。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs401_1', label: '工程化开发', description: '使用 Git、CI/CD 管道进行团队协作与持续集成。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS401', to: 'kp_cs401_1', relation: 'CONTAINS' },
+      { from: 'CS401', to: 'kp_cs401_2', relation: 'CONTAINS' },
+      { from: 'CS401', to: 'kp_cs401_3', relation: 'CONTAINS' },
+      { from: 'CS401', to: 'skill_cs401_1', relation: 'BUILDS' }
+    ]
+  },
+  CS402: {
+    nodes: [
+      { id: 'kp_cs402_1', label: '搜索算法', content: 'BFS/DFS、A*启发式搜索、对抗搜索（minimax + alpha-beta剪枝）。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs402_2', label: '知识表示', content: '一阶谓词逻辑、语义网络、产生式规则与知识库构建。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs402_3', label: '概率推理', content: '贝叶斯网络、马尔可夫链、隐马尔可夫模型（HMM）基础。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs402_1', label: 'AI 问题建模', description: '将实际问题形式化为搜索、约束满足或概率推理问题。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS402', to: 'kp_cs402_1', relation: 'CONTAINS' },
+      { from: 'CS402', to: 'kp_cs402_2', relation: 'CONTAINS' },
+      { from: 'CS402', to: 'kp_cs402_3', relation: 'CONTAINS' },
+      { from: 'CS402', to: 'skill_cs402_1', relation: 'BUILDS' }
+    ]
+  },
+  CS403: {
+    nodes: [
+      { id: 'kp_cs403_1', label: '监督学习', content: '线性回归、逻辑回归、SVM、决策树、随机森林的原理与应用。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs403_2', label: '无监督学习', content: 'K-Means、DBSCAN聚类，PCA、t-SNE降维算法。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs403_3', label: '模型评估', content: '交叉验证、混淆矩阵、ROC曲线、偏差-方差权衡。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs403_1', label: 'Python 数据分析', description: '使用 scikit-learn、pandas、matplotlib 完成机器学习流程。', node_type: 'Skill' },
+      { id: 'skill_cs403_2', label: '特征工程', description: '数据清洗、特征选择与构造、归一化处理。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS403', to: 'kp_cs403_1', relation: 'CONTAINS' },
+      { from: 'CS403', to: 'kp_cs403_2', relation: 'CONTAINS' },
+      { from: 'CS403', to: 'kp_cs403_3', relation: 'CONTAINS' },
+      { from: 'CS403', to: 'skill_cs403_1', relation: 'BUILDS' },
+      { from: 'CS403', to: 'skill_cs403_2', relation: 'BUILDS' }
+    ]
+  },
+  CS404: {
+    nodes: [
+      { id: 'kp_cs404_1', label: '神经网络基础', content: '感知机、多层感知机、反向传播算法、激活函数选择。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs404_2', label: '卷积神经网络', content: 'CNN结构、卷积层/池化层/全连接层，经典网络 VGG/ResNet。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs404_3', label: '序列模型', content: 'RNN、LSTM、GRU的门控机制，Transformer与自注意力机制。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs404_1', label: 'PyTorch 建模', description: '使用 PyTorch 构建、训练和部署深度学习模型。', node_type: 'Skill' },
+      { id: 'skill_cs404_2', label: '模型调优', description: '学习率调度、Dropout、Batch Norm等正则化与优化技巧。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS404', to: 'kp_cs404_1', relation: 'CONTAINS' },
+      { from: 'CS404', to: 'kp_cs404_2', relation: 'CONTAINS' },
+      { from: 'CS404', to: 'kp_cs404_3', relation: 'CONTAINS' },
+      { from: 'CS404', to: 'skill_cs404_1', relation: 'BUILDS' },
+      { from: 'CS404', to: 'skill_cs404_2', relation: 'BUILDS' }
+    ]
+  },
+  CS405: {
+    nodes: [
+      { id: 'kp_cs405_1', label: '坐标变换', content: '模型/视图/投影矩阵（MVP），齐次坐标与仿射变换推导。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs405_2', label: '光栅化与着色', content: '扫描线算法、重心坐标插值、Phong光照模型与着色方程。', difficulty: '困难', node_type: 'KnowledgePoint' },
+      { id: 'kp_cs405_3', label: '纹理映射', content: 'UV坐标、Mipmap抗锯齿、法线贴图与环境贴图技术。', difficulty: '中等', node_type: 'KnowledgePoint' },
+      { id: 'skill_cs405_1', label: 'OpenGL/WebGL', description: '使用 OpenGL 或 WebGL 实现三维场景渲染管线。', node_type: 'Skill' },
+      { id: 'skill_cs405_2', label: 'Shader 编程', description: '编写 GLSL 顶点着色器和片元着色器实现特效。', node_type: 'Skill' }
+    ],
+    edges: [
+      { from: 'CS405', to: 'kp_cs405_1', relation: 'CONTAINS' },
+      { from: 'CS405', to: 'kp_cs405_2', relation: 'CONTAINS' },
+      { from: 'CS405', to: 'kp_cs405_3', relation: 'CONTAINS' },
+      { from: 'CS405', to: 'skill_cs405_1', relation: 'BUILDS' },
+      { from: 'CS405', to: 'skill_cs405_2', relation: 'BUILDS' }
+    ]
+  }
+}
+
 // MOCK 降级数据
 const MOCK_NODES = [
   { id: 'CS101', label: '计算机导论', credit: 3, course_type: '必修', department: '计算机科学与技术', description: '计算机科学的基础课程', prerequisite: '', node_type: 'Course' },
@@ -482,35 +674,46 @@ export default {
     },
 
     async expandNode(courseCode) {
+      let expandData = null
       try {
         const token = localStorage.getItem('token')
         const res = await fetch(`${BASE_URL}/api/knowledge_graph/expand/${courseCode}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        if (!res.ok) throw new Error('expand API failed')
-        const data = await res.json()
-
-        const newNodeItems = (data.nodes || []).map(n => this.buildNodeItem(n))
-        const newEdgeItems = (data.edges || []).map((e, i) => this.buildEdgeItem(e, `expand_${courseCode}_${i}`))
-
-        const childIds = newNodeItems.map(n => n.id)
-        this.childrenMap[courseCode] = childIds
-
-        this.nodesDataSet.add(newNodeItems)
-        this.edgesDataSet.add(newEdgeItems)
-        this.expandedNodes.add(courseCode)
-
-        // 临时开启 physics 让节点重新分布
-        this.network.setOptions({ physics: { enabled: true } })
-        setTimeout(() => {
-          if (this.network) {
-            this.network.setOptions({ physics: { enabled: false } })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.nodes && data.nodes.length > 0) {
+            expandData = data
           }
-        }, 1500)
+        }
       } catch (e) {
-        console.warn('展开节点失败', e)
-        this.$message && this.$message.warning('暂无该课程的知识点数据')
+        console.warn('expand API 失败，使用 mock 数据', e)
       }
+
+      // API 返回空或失败时，降级到 mock 数据
+      if (!expandData) {
+        expandData = MOCK_EXPAND[courseCode] || { nodes: [], edges: [] }
+      }
+
+      const newNodeItems = (expandData.nodes || []).map(n => this.buildNodeItem(n))
+      const newEdgeItems = (expandData.edges || []).map((e, i) => this.buildEdgeItem(e, `expand_${courseCode}_${i}`))
+
+      if (newNodeItems.length === 0) return  // 真的没有数据则跳过
+
+      const childIds = newNodeItems.map(n => n.id)
+      this.childrenMap[courseCode] = childIds
+
+      this.nodesDataSet.add(newNodeItems)
+      this.edgesDataSet.add(newEdgeItems)
+      this.expandedNodes.add(courseCode)
+
+      // 临时开启 physics 让节点自然弹开
+      this.network.setOptions({ physics: { enabled: true } })
+      setTimeout(() => {
+        if (this.network) {
+          this.network.setOptions({ physics: { enabled: false } })
+        }
+      }, 1500)
     },
 
     collapseNode(courseCode) {
@@ -702,11 +905,11 @@ export default {
 
     difficultyStyle(level) {
       const map = {
-        '简单': { background: 'rgba(16,185,129,0.2)', color: '#34d399' },
-        '中等': { background: 'rgba(245,158,11,0.2)', color: '#fbbf24' },
-        '困难': { background: 'rgba(239,68,68,0.2)', color: '#f87171' },
+        '简单': { background: 'rgba(16,185,129,0.12)', color: '#059669' },
+        '中等': { background: 'rgba(245,158,11,0.12)', color: '#d97706' },
+        '困难': { background: 'rgba(239,68,68,0.12)', color: '#dc2626' },
       }
-      return map[level] || { background: 'rgba(100,116,139,0.2)', color: '#94a3b8' }
+      return map[level] || { background: 'rgba(100,116,139,0.12)', color: '#64748b' }
     }
   }
 }
@@ -730,40 +933,14 @@ export default {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: #161b22;
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
 }
 
 .toolbar-search {
   flex-shrink: 0;
-}
-
-.toolbar-search :deep(.el-input__wrapper) {
-  background: #0d1117;
-  border: 1px solid #30363d;
-  box-shadow: none;
-}
-.toolbar-search :deep(.el-input__wrapper):hover {
-  border-color: #0ea5e9;
-}
-.toolbar-search :deep(.el-input__wrapper.is-focus) {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
-}
-.toolbar-search :deep(.el-input__inner) {
-  color: #e2e8f0;
-  font-size: 13px;
-}
-.toolbar-search :deep(.el-input__inner::placeholder) {
-  color: #4b5563;
-}
-.toolbar-search :deep(.el-icon) {
-  color: #64748b;
-}
-.toolbar-search :deep(.el-input__clear) {
-  color: #64748b;
 }
 
 .toolbar-filters {
@@ -773,17 +950,18 @@ export default {
 
 .filter-btn {
   padding: 5px 14px;
-  border-radius: 6px;
-  border: 1px solid #30363d;
-  background: transparent;
-  color: #94a3b8;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
 .filter-btn:hover {
   border-color: #0ea5e9;
-  color: #e2e8f0;
+  color: #0ea5e9;
+  background: #f0f9ff;
 }
 .filter-btn.active {
   background: #0ea5e9;
@@ -801,10 +979,10 @@ export default {
 .action-btn {
   width: 34px;
   height: 34px;
-  border-radius: 6px;
-  border: 1px solid #30363d;
-  background: transparent;
-  color: #94a3b8;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -815,7 +993,7 @@ export default {
 .action-btn:hover {
   border-color: #0ea5e9;
   color: #0ea5e9;
-  background: rgba(14, 165, 233, 0.08);
+  background: #f0f9ff;
 }
 
 /* ===== 主体 ===== */
@@ -904,9 +1082,9 @@ export default {
 .kg-detail {
   width: 300px;
   flex-shrink: 0;
-  background: #161b22;
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -920,25 +1098,24 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  color: #4b5563;
   padding: 24px;
   text-align: center;
 }
 
 .empty-icon {
   font-size: 40px;
-  color: #30363d;
+  color: #cbd5e1;
 }
 
 .detail-empty p {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 .empty-sub {
   font-size: 12px !important;
-  color: #374151 !important;
+  color: #cbd5e1 !important;
 }
 
 /* 类型颜色条 */
@@ -953,7 +1130,7 @@ export default {
   overflow-y: auto;
   padding: 16px;
   scrollbar-width: thin;
-  scrollbar-color: #30363d transparent;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
 .detail-content::-webkit-scrollbar {
@@ -963,7 +1140,7 @@ export default {
   background: transparent;
 }
 .detail-content::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: #e2e8f0;
   border-radius: 4px;
 }
 
@@ -984,19 +1161,19 @@ export default {
 .detail-title {
   font-size: 16px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: #1e293b;
   line-height: 1.4;
 }
 
 .detail-code {
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
   margin-top: 2px;
 }
 
 .detail-divider {
   height: 1px;
-  background: #21262d;
+  background: #f1f5f9;
   margin: 12px 0;
 }
 
@@ -1010,14 +1187,14 @@ export default {
 }
 
 .detail-key {
-  color: #64748b;
+  color: #94a3b8;
   flex-shrink: 0;
   font-size: 12px;
   padding-top: 1px;
 }
 
 .detail-val {
-  color: #cbd5e1;
+  color: #334155;
   text-align: right;
   line-height: 1.5;
 }
@@ -1027,7 +1204,7 @@ export default {
 }
 
 .detail-val.muted {
-  color: #374151;
+  color: #cbd5e1;
 }
 
 .detail-desc {
@@ -1041,7 +1218,7 @@ export default {
 }
 
 .detail-desc-text {
-  color: #94a3b8;
+  color: #475569;
   line-height: 1.7;
   font-size: 13px;
 }
@@ -1052,10 +1229,10 @@ export default {
   gap: 8px;
   font-size: 12px;
   color: #64748b;
-  background: #0d1117;
+  background: #f8fafc;
   border-radius: 6px;
   padding: 8px 10px;
-  border: 1px solid #21262d;
+  border: 1px solid #e2e8f0;
 }
 
 .difficulty-tag {
@@ -1064,6 +1241,28 @@ export default {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+}
+
+.detail-kp-content {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.7;
+  border: 1px solid #e2e8f0;
+  margin-top: 6px;
+}
+
+.detail-skill-desc {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.7;
+  border: 1px solid #e2e8f0;
+  margin-top: 6px;
 }
 
 /* ===== 全屏状态 ===== */
