@@ -1,194 +1,219 @@
 <template>
-  <div class="career-path-container">
-    <h1 class="page-title">职业发展规划</h1>
-    
-    <div class="career-explore-section">
-      <div class="section-header">
-        <h2>探索职业方向</h2>
-        <div class="search-bar">
-          <el-input
-            placeholder="搜索职业或技能..."
-            v-model="searchQuery"
-            prefix-icon="el-icon-search"
-            clearable
-          >
-          </el-input>
+  <div class="career-container">
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">职业发展规划</h1>
+        <span class="page-subtitle">探索适合你的职业方向</span>
+      </div>
+      <div class="search-wrap">
+        <el-input
+          v-model="searchQuery"
+          placeholder="搜索职业或技能..."
+          clearable
+          size="large"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filters-panel">
+      <div class="filter-row">
+        <span class="filter-label">领域</span>
+        <div class="filter-tags">
+          <span class="filter-tag" :class="{ active: selectedField === 'all' }" @click="selectedField = 'all'">全部</span>
+          <span class="filter-tag" :class="{ active: selectedField === 'development' }" @click="selectedField = 'development'">软件开发</span>
+          <span class="filter-tag" :class="{ active: selectedField === 'ai' }" @click="selectedField = 'ai'">人工智能</span>
+          <span class="filter-tag" :class="{ active: selectedField === 'data' }" @click="selectedField = 'data'">数据科学</span>
+          <span class="filter-tag" :class="{ active: selectedField === 'security' }" @click="selectedField = 'security'">网络安全</span>
         </div>
       </div>
-      
-      <div class="career-filters">
-        <div class="filter-group">
-          <span class="filter-label">领域：</span>
-          <el-radio-group v-model="selectedField" size="small">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="development">软件开发</el-radio-button>
-            <el-radio-button label="ai">人工智能</el-radio-button>
-            <el-radio-button label="data">数据科学</el-radio-button>
-            <el-radio-button label="security">网络安全</el-radio-button>
-          </el-radio-group>
-        </div>
-        
-        <div class="filter-group">
-          <span class="filter-label">薪资范围：</span>
-          <el-select v-model="salaryRange" size="small" placeholder="选择薪资范围">
-            <el-option
-              v-for="item in salaryOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
+      <div class="filter-divider"></div>
+      <div class="filter-row filter-row-selects">
+        <div class="select-group">
+          <span class="filter-label">薪资范围</span>
+          <el-select v-model="salaryRange" size="small" placeholder="不限" style="width: 130px">
+            <el-option v-for="item in salaryOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
-        
-        <div class="filter-group">
-          <span class="filter-label">排序方式：</span>
-          <el-select v-model="sortBy" size="small" placeholder="排序方式">
-            <el-option label="热门程度" value="popularity"></el-option>
-            <el-option label="薪资水平" value="salary"></el-option>
-            <el-option label="职业前景" value="prospect"></el-option>
+        <div class="select-group">
+          <span class="filter-label">排序方式</span>
+          <el-select v-model="sortBy" size="small" placeholder="热门程度" style="width: 130px">
+            <el-option label="热门程度" value="popularity" />
+            <el-option label="薪资水平" value="salary" />
+            <el-option label="职业前景" value="prospect" />
           </el-select>
-        </div>
-      </div>
-      
-      <div class="career-paths">
-        <div v-for="(path, index) in filteredPaths" :key="index" class="career-card" @click="selectCareerPath(path)">
-          <div class="career-header">
-            <div class="career-icon" :style="{ backgroundColor: path.color }">
-              <i :class="path.icon"></i>
-            </div>
-            <div class="career-title">{{ path.title }}</div>
-          </div>
-          <div class="career-content">
-            <div class="career-desc">{{ path.description }}</div>
-            <div class="career-stats">
-              <div class="stat-item">
-                <div class="stat-label">平均薪资</div>
-                <div class="stat-value">{{ path.salary }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">需求趋势</div>
-                <div class="stat-value">
-                  <i :class="getTrendIcon(path.trend)" :style="{ color: getTrendColor(path.trend) }"></i>
-                  {{ path.trend > 0 ? '+' + path.trend + '%' : path.trend + '%' }}
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">匹配度</div>
-                <div class="stat-value">{{ path.match }}%</div>
-              </div>
-            </div>
-          </div>
-          <div class="career-footer">
-            <el-button type="text">查看详情</el-button>
-            <el-button type="primary" size="small" @click.stop="createPlan(path)">制定规划</el-button>
-          </div>
         </div>
       </div>
     </div>
-    
-    <div class="career-detail-section" v-if="selectedPath">
-      <div class="section-header">
-        <div class="header-title">
-          <h2>{{ selectedPath.title }}</h2>
-          <div class="match-badge" :class="getMatchClass(selectedPath.match)">
-            匹配度 {{ selectedPath.match }}%
+
+    <!-- 职业卡片列表 -->
+    <div class="career-grid" v-if="!selectedPath">
+      <div
+        v-for="(path, index) in filteredPaths"
+        :key="index"
+        class="career-card"
+        @click="selectCareerPath(path)"
+      >
+        <div class="card-top" :style="{ background: path.color }">
+          <el-icon class="card-top-icon"><component :is="path.icon" /></el-icon>
+          <div class="card-match-badge">匹配 {{ path.match }}%</div>
+        </div>
+        <div class="card-body">
+          <h3 class="career-title">{{ path.title }}</h3>
+          <p class="career-desc">{{ path.description }}</p>
+          <div class="career-stats">
+            <div class="stat-item">
+              <span class="stat-label">平均薪资</span>
+              <span class="stat-value">{{ path.salary }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">需求趋势</span>
+              <span class="stat-value trend-value" :style="{ color: getTrendColor(path.trend) }">
+                <el-icon><component :is="getTrendIcon(path.trend)" /></el-icon>
+                {{ path.trend > 0 ? '+' + path.trend + '%' : path.trend + '%' }}
+              </span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">入行年限</span>
+              <span class="stat-value">{{ path.experience }} 年</span>
+            </div>
           </div>
         </div>
-        <el-button @click="selectedPath = null" icon="el-icon-back" size="small">返回列表</el-button>
+        <div class="card-footer">
+          <el-button type="primary" link @click.stop="selectCareerPath(path)">查看详情</el-button>
+          <el-button type="primary" size="small" @click.stop="createPlan(path)">制定规划</el-button>
+        </div>
       </div>
-      
-      <div class="detail-content">
-        <div class="detail-overview">
-          <p class="detail-description">{{ selectedPath.fullDescription || selectedPath.description }}</p>
-          
-          <div class="detail-stats">
-            <div class="stat-box">
-              <div class="stat-title">平均薪资</div>
-              <div class="stat-value lg">{{ selectedPath.salary }}</div>
+    </div>
+
+    <!-- 职业详情 -->
+    <div class="career-detail" v-if="selectedPath">
+      <div class="detail-hero" :style="{ background: selectedPath.color }">
+        <el-icon class="hero-icon"><component :is="selectedPath.icon" /></el-icon>
+        <div class="hero-info">
+          <h2 class="hero-title">{{ selectedPath.title }}</h2>
+          <div class="hero-badges">
+            <span class="match-badge" :class="getMatchClass(selectedPath.match)">
+              匹配度 {{ selectedPath.match }}%
+            </span>
+            <span class="field-badge">{{ fieldLabel[selectedPath.field] }}</span>
+          </div>
+        </div>
+        <el-button class="back-btn" @click="selectedPath = null" size="small">
+          <el-icon><ArrowLeft /></el-icon> 返回列表
+        </el-button>
+      </div>
+
+      <div class="detail-body">
+        <!-- 概览 -->
+        <div class="detail-section">
+          <p class="detail-desc">{{ selectedPath.fullDescription || selectedPath.description }}</p>
+          <div class="overview-stats">
+            <div class="overview-stat">
+              <div class="ov-label">平均薪资</div>
+              <div class="ov-value">{{ selectedPath.salary }}</div>
             </div>
-            <div class="stat-box">
-              <div class="stat-title">市场需求</div>
-              <div class="stat-value lg" :style="{ color: getTrendColor(selectedPath.trend) }">
-                {{ selectedPath.trend > 0 ? '上升 ' + selectedPath.trend + '%' : '下降 ' + Math.abs(selectedPath.trend) + '%' }}
+            <div class="overview-stat">
+              <div class="ov-label">市场需求</div>
+              <div class="ov-value" :style="{ color: getTrendColor(selectedPath.trend) }">
+                {{ selectedPath.trend > 0 ? '上升 +' + selectedPath.trend + '%' : '下降 ' + selectedPath.trend + '%' }}
               </div>
             </div>
-            <div class="stat-box">
-              <div class="stat-title">入行年限</div>
-              <div class="stat-value lg">{{ selectedPath.experience }}年</div>
+            <div class="overview-stat">
+              <div class="ov-label">入行年限</div>
+              <div class="ov-value">{{ selectedPath.experience }} 年</div>
             </div>
           </div>
         </div>
-        
-        <div class="skill-requirements">
-          <h3>所需技能</h3>
+
+        <!-- 技能要求 -->
+        <div class="detail-section">
+          <h3 class="section-title">所需技能</h3>
           <div class="skill-groups">
             <div class="skill-group">
-              <h4>核心技能</h4>
-              <div class="skill-list">
-                <div v-for="(skill, idx) in selectedPath.coreSkills" :key="'core-'+idx" class="skill-item">
-                  <div class="skill-name">{{ skill.name }}</div>
-                  <div class="skill-level-bar">
-                    <div class="skill-level-indicator">
-                      <div class="required-level" :style="{ width: skill.requiredLevel + '%' }"></div>
-                      <div class="current-level" :style="{ width: skill.currentLevel + '%' }"></div>
-                    </div>
-                    <div class="skill-level-text">
-                      <span>当前: {{ skill.currentLevel }}%</span>
-                      <span>要求: {{ skill.requiredLevel }}%</span>
-                    </div>
-                  </div>
+              <h4 class="skill-group-title">核心技能</h4>
+              <div
+                v-for="(skill, idx) in selectedPath.coreSkills"
+                :key="'core-' + idx"
+                class="skill-item"
+              >
+                <div class="skill-row">
+                  <span class="skill-name">{{ skill.name }}</span>
+                  <span class="skill-pcts">
+                    <span class="current-pct">当前 {{ skill.currentLevel }}%</span>
+                    <span class="required-pct">需要 {{ skill.requiredLevel }}%</span>
+                  </span>
+                </div>
+                <div class="skill-track">
+                  <div class="skill-required" :style="{ width: skill.requiredLevel + '%' }"></div>
+                  <div class="skill-current" :style="{ width: skill.currentLevel + '%' }"></div>
                 </div>
               </div>
             </div>
-            
             <div class="skill-group">
-              <h4>辅助技能</h4>
-              <div class="skill-list">
-                <div v-for="(skill, idx) in selectedPath.supportSkills" :key="'support-'+idx" class="skill-item">
-                  <div class="skill-name">{{ skill.name }}</div>
-                  <div class="skill-level-bar">
-                    <div class="skill-level-indicator">
-                      <div class="required-level" :style="{ width: skill.requiredLevel + '%' }"></div>
-                      <div class="current-level" :style="{ width: skill.currentLevel + '%' }"></div>
-                    </div>
-                    <div class="skill-level-text">
-                      <span>当前: {{ skill.currentLevel }}%</span>
-                      <span>要求: {{ skill.requiredLevel }}%</span>
-                    </div>
+              <h4 class="skill-group-title">辅助技能</h4>
+              <div
+                v-for="(skill, idx) in selectedPath.supportSkills"
+                :key="'support-' + idx"
+                class="skill-item"
+              >
+                <div class="skill-row">
+                  <span class="skill-name">{{ skill.name }}</span>
+                  <span class="skill-pcts">
+                    <span class="current-pct">当前 {{ skill.currentLevel }}%</span>
+                    <span class="required-pct">需要 {{ skill.requiredLevel }}%</span>
+                  </span>
+                </div>
+                <div class="skill-track">
+                  <div class="skill-required" :style="{ width: skill.requiredLevel + '%' }"></div>
+                  <div class="skill-current" :style="{ width: skill.currentLevel + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学习路线图 -->
+        <div class="detail-section" v-if="selectedPath.roadmap && selectedPath.roadmap.length">
+          <h3 class="section-title">学习路线图</h3>
+          <div class="roadmap">
+            <div
+              v-for="(stage, idx) in selectedPath.roadmap"
+              :key="idx"
+              class="roadmap-item"
+            >
+              <div class="roadmap-indicator">
+                <div class="roadmap-dot" :class="{ completed: stage.completed }"></div>
+                <div class="roadmap-line" v-if="idx < selectedPath.roadmap.length - 1"></div>
+              </div>
+              <div class="roadmap-content">
+                <div class="roadmap-header">
+                  <span class="roadmap-title">{{ stage.title }}</span>
+                  <span class="roadmap-duration">{{ stage.duration }}</span>
+                </div>
+                <p class="roadmap-desc">{{ stage.description }}</p>
+                <div class="roadmap-resources" v-if="stage.resources && stage.resources.length">
+                  <div
+                    v-for="(res, ri) in stage.resources"
+                    :key="ri"
+                    class="resource-tag"
+                  >
+                    <el-icon><component :is="getResourceIcon(res.type)" /></el-icon>
+                    {{ res.title }}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        <div class="learning-roadmap">
-          <h3>学习路线图</h3>
-          <div class="roadmap-timeline">
-            <div v-for="(stage, idx) in selectedPath.roadmap" :key="idx" class="roadmap-stage">
-              <div class="stage-indicator">
-                <div class="stage-dot" :class="{ 'completed': stage.completed }"></div>
-                <div class="stage-line" v-if="idx < selectedPath.roadmap.length - 1"></div>
-              </div>
-              <div class="stage-content">
-                <div class="stage-header">
-                  <div class="stage-title">{{ stage.title }}</div>
-                  <div class="stage-duration">{{ stage.duration }}</div>
-                </div>
-                <div class="stage-description">{{ stage.description }}</div>
-                <div class="stage-resources" v-if="stage.resources && stage.resources.length">
-                  <div v-for="(resource, resIdx) in stage.resources" :key="resIdx" class="stage-resource">
-                    <i :class="getResourceTypeIcon(resource.type)"></i> {{ resource.title }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="action-buttons">
-          <el-button type="primary" @click="createPlan(selectedPath)">制定个人发展规划</el-button>
-          <el-button @click="showRelatedCourses(selectedPath)">查看相关课程</el-button>
+
+        <div class="detail-actions">
+          <el-button type="primary" size="large" @click="createPlan(selectedPath)">制定个人发展规划</el-button>
+          <el-button size="large" @click="showRelatedCourses(selectedPath)">查看相关课程</el-button>
         </div>
       </div>
     </div>
@@ -196,8 +221,19 @@
 </template>
 
 <script>
+import {
+  Search, ArrowLeft, ArrowUp, ArrowDown, Minus,
+  Monitor, DataLine, TrendCharts, Cpu, Lock,
+  Reading, Notebook, OfficeBuilding, Document
+} from '@element-plus/icons-vue'
+
 export default {
   name: "CareerPath",
+  components: {
+    Search, ArrowLeft, ArrowUp, ArrowDown, Minus,
+    Monitor, DataLine, TrendCharts, Cpu, Lock,
+    Reading, Notebook, OfficeBuilding, Document
+  },
   data() {
     return {
       searchQuery: '',
@@ -205,23 +241,27 @@ export default {
       salaryRange: '',
       sortBy: 'popularity',
       selectedPath: null,
-      
+      fieldLabel: {
+        development: '软件开发',
+        ai: '人工智能',
+        data: '数据科学',
+        security: '网络安全'
+      },
       salaryOptions: [
         { value: '', label: '不限' },
         { value: '10k-15k', label: '10k-15k' },
         { value: '15k-20k', label: '15k-20k' },
         { value: '20k-30k', label: '20k-30k' },
-        { value: '30k+', label: '30k以上' }
+        { value: '30k+', label: '30k 以上' }
       ],
-      
       careerPaths: [
         {
           id: 1,
           title: '前端开发工程师',
           description: '专注于网站和应用的用户界面和交互体验的开发与实现。',
-          fullDescription: '前端开发工程师负责构建网站和应用程序的用户界面，确保用户体验流畅和响应迅速。他们使用HTML、CSS和JavaScript等技术，结合现代前端框架如React、Vue或Angular来开发交互式网页应用。前端开发者需要关注网站性能优化、浏览器兼容性和响应式设计，确保应用在各种设备上都能良好运行。',
-          color: '#409EFF',
-          icon: 'el-icon-s-platform',
+          fullDescription: '前端开发工程师负责构建网站和应用程序的用户界面，确保用户体验流畅和响应迅速。他们使用 HTML、CSS 和 JavaScript 等技术，结合现代前端框架如 React、Vue 或 Angular 来开发交互式网页应用。前端开发者需要关注网站性能优化、浏览器兼容性和响应式设计，确保应用在各种设备上都能良好运行。',
+          color: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+          icon: 'Monitor',
           field: 'development',
           salary: '15k-25k',
           trend: 15,
@@ -243,7 +283,7 @@ export default {
             {
               title: '掌握基础',
               duration: '2-3个月',
-              description: '学习HTML、CSS和JavaScript基础，理解Web工作原理',
+              description: '学习 HTML、CSS 和 JavaScript 基础，理解 Web 工作原理',
               completed: true,
               resources: [
                 { type: 'course', title: 'Web开发基础课程' },
@@ -253,7 +293,7 @@ export default {
             {
               title: '学习框架',
               duration: '3-4个月',
-              description: '学习React或Vue等主流前端框架，掌握组件化开发',
+              description: '学习 React 或 Vue 等主流前端框架，掌握组件化开发',
               completed: false,
               resources: [
                 { type: 'course', title: 'React入门到精通' },
@@ -286,8 +326,8 @@ export default {
           id: 2,
           title: '数据科学家',
           description: '通过数据分析和机器学习技术解决复杂问题，提供数据驱动的决策支持。',
-          color: '#67C23A',
-          icon: 'el-icon-s-data',
+          color: 'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+          icon: 'DataLine',
           field: 'data',
           salary: '20k-35k',
           trend: 25,
@@ -309,9 +349,9 @@ export default {
         {
           id: 3,
           title: '机器学习工程师',
-          description: '设计和实现机器学习模型和算法，将AI技术应用到实际业务中。',
-          color: '#E6A23C',
-          icon: 'el-icon-s-opportunity',
+          description: '设计和实现机器学习模型和算法，将 AI 技术应用到实际业务中。',
+          color: 'linear-gradient(135deg, #78350f 0%, #f59e0b 100%)',
+          icon: 'TrendCharts',
           field: 'ai',
           salary: '25k-40k',
           trend: 30,
@@ -334,8 +374,8 @@ export default {
           id: 4,
           title: '后端开发工程师',
           description: '负责服务器端应用程序的开发，确保系统的性能、安全和可扩展性。',
-          color: '#F56C6C',
-          icon: 'el-icon-s-cooperation',
+          color: 'linear-gradient(135deg, #4c1d95 0%, #a855f7 100%)',
+          icon: 'Cpu',
           field: 'development',
           salary: '18k-30k',
           trend: 10,
@@ -358,8 +398,8 @@ export default {
           id: 5,
           title: '网络安全工程师',
           description: '保护组织的计算机系统和网络免受攻击，确保数据安全和隐私。',
-          color: '#909399',
-          icon: 'el-icon-lock',
+          color: 'linear-gradient(135deg, #1f2937 0%, #6b7280 100%)',
+          icon: 'Lock',
           field: 'security',
           salary: '20k-35k',
           trend: 20,
@@ -383,214 +423,251 @@ export default {
   },
   computed: {
     filteredPaths() {
-      let result = this.careerPaths;
-      
-      // 按照领域筛选
+      let result = this.careerPaths
       if (this.selectedField !== 'all') {
-        result = result.filter(path => path.field === this.selectedField);
+        result = result.filter(p => p.field === this.selectedField)
       }
-      
-      // 按照薪资范围筛选
       if (this.salaryRange) {
-        // 简化处理，实际应根据薪资范围具体逻辑筛选
-        result = result.filter(path => path.salary.includes(this.salaryRange.split('-')[0]));
+        const minKey = this.salaryRange.split('-')[0]
+        result = result.filter(p => p.salary.includes(minKey))
       }
-      
-      // 搜索关键词
       if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(path => 
-          path.title.toLowerCase().includes(query) || 
-          path.description.toLowerCase().includes(query)
-        );
+        const q = this.searchQuery.toLowerCase()
+        result = result.filter(p =>
+          p.title.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
+        )
       }
-      
-      // 根据排序方式排序
-      switch(this.sortBy) {
-        case 'popularity':
-          result.sort((a, b) => b.match - a.match);
-          break;
-        case 'salary':
-          // 简化处理，实际应解析薪资字符串进行比较
-          result.sort((a, b) => {
-            const aMin = parseInt(a.salary.split('-')[0]);
-            const bMin = parseInt(b.salary.split('-')[0]);
-            return bMin - aMin;
-          });
-          break;
-        case 'prospect':
-          result.sort((a, b) => b.trend - a.trend);
-          break;
+      const sorted = [...result]
+      if (this.sortBy === 'salary') {
+        sorted.sort((a, b) => parseInt(b.salary) - parseInt(a.salary))
+      } else if (this.sortBy === 'prospect') {
+        sorted.sort((a, b) => b.trend - a.trend)
+      } else {
+        sorted.sort((a, b) => b.match - a.match)
       }
-      
-      return result;
+      return sorted
     }
   },
   methods: {
     selectCareerPath(path) {
-      this.selectedPath = path;
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+      this.selectedPath = path
+      this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
     },
-    
     createPlan(path) {
-      // 实现制定规划的逻辑
-      this.$message({
-        message: `即将为您制定"${path.title}"的职业发展规划`,
-        type: 'success'
-      });
+      this.$message({ message: `即将为您制定"${path.title}"的职业发展规划`, type: 'success' })
     },
-    
     showRelatedCourses(path) {
-      // 实现显示相关课程的逻辑
-      this.$message({
-        message: `查看与"${path.title}"相关的课程`,
-        type: 'info'
-      });
+      this.$message({ message: `查看与"${path.title}"相关的课程`, type: 'info' })
     },
-    
     getTrendIcon(trend) {
-      if (trend > 0) return 'el-icon-top';
-      if (trend < 0) return 'el-icon-bottom';
-      return 'el-icon-right';
+      if (trend > 0) return 'ArrowUp'
+      if (trend < 0) return 'ArrowDown'
+      return 'Minus'
     },
-    
     getTrendColor(trend) {
-      if (trend > 15) return '#67C23A';
-      if (trend > 0) return '#E6A23C';
-      return '#F56C6C';
+      if (trend > 15) return '#10b981'
+      if (trend > 0) return '#f59e0b'
+      return '#ef4444'
     },
-    
     getMatchClass(match) {
-      if (match >= 80) return 'high-match';
-      if (match >= 60) return 'medium-match';
-      return 'low-match';
+      if (match >= 80) return 'badge-high'
+      if (match >= 60) return 'badge-mid'
+      return 'badge-low'
     },
-    
-    getResourceTypeIcon(type) {
-      const icons = {
-        'course': 'el-icon-reading',
-        'book': 'el-icon-notebook-2',
-        'project': 'el-icon-s-cooperation',
-        'internship': 'el-icon-office-building'
-      };
-      return icons[type] || 'el-icon-document';
+    getResourceIcon(type) {
+      const map = {
+        course: 'Reading',
+        book: 'Notebook',
+        project: 'Document',
+        internship: 'OfficeBuilding'
+      }
+      return map[type] || 'Document'
     }
   }
 }
 </script>
 
 <style scoped>
-.career-path-container {
-  padding: 20px;
+.career-container {
+  padding: 28px 24px;
+  min-height: 100%;
 }
 
-.page-title {
-  margin-bottom: 24px;
-  font-size: 24px;
-  color: #333;
-}
-
-.career-explore-section, .career-detail-section {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  margin-bottom: 30px;
-}
-
-.section-header {
+/* ── Header ── */
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.section-header h2 {
-  margin: 0;
-  font-size: 18px;
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.search-bar {
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.search-wrap {
   width: 300px;
 }
 
-.career-filters {
+/* ── Filters ── */
+.filters-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
   margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.filter-group {
+.filter-row {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-row-selects {
+  gap: 24px;
+}
+
+.select-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .filter-label {
-  margin-right: 10px;
-  color: #606266;
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+  min-width: 44px;
 }
 
-.career-paths {
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-tag {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.filter-tag:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.filter-tag.active {
+  background: #0ea5e9;
+  color: #fff;
+}
+
+.filter-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+
+/* ── Career Grid ── */
+.career-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
 .career-card {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .career-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.11);
 }
 
-.career-header {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.career-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.card-top {
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  color: white;
-  font-size: 18px;
+  position: relative;
+}
+
+.card-top-icon {
+  font-size: 44px;
+  color: rgba(255,255,255,0.9);
+}
+
+.card-match-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.card-body {
+  padding: 16px;
+  flex: 1;
 }
 
 .career-title {
   font-size: 16px;
-  font-weight: 600;
-}
-
-.career-content {
-  padding: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
 }
 
 .career-desc {
-  color: #606266;
-  margin-bottom: 15px;
-  min-height: 60px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .career-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
 }
 
 .stat-item {
@@ -598,284 +675,344 @@ export default {
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 5px;
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
 }
 
 .stat-value {
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 13px;
   font-weight: 600;
+  color: #334155;
 }
 
-.career-footer {
-  padding: 10px 15px;
-  border-top: 1px solid #f0f0f0;
+.trend-value {
+  font-size: 12px;
+}
+
+.card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* 详情部分 */
-.header-title {
+/* ── Detail ── */
+.career-detail {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.detail-hero {
   display: flex;
   align-items: center;
+  gap: 20px;
+  padding: 28px 28px;
+  position: relative;
+}
+
+.hero-icon {
+  font-size: 52px;
+  color: rgba(255,255,255,0.9);
+  flex-shrink: 0;
+}
+
+.hero-info {
+  flex: 1;
+}
+
+.hero-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .match-badge {
-  margin-left: 15px;
-  padding: 4px 10px;
-  border-radius: 15px;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 12px;
-  color: white;
+  font-weight: 600;
+  color: #fff;
 }
 
-.high-match {
-  background-color: #67C23A;
+.badge-high { background: rgba(16,185,129,0.85); }
+.badge-mid  { background: rgba(245,158,11,0.85); }
+.badge-low  { background: rgba(239,68,68,0.85); }
+
+.field-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
 }
 
-.medium-match {
-  background-color: #E6A23C;
+.back-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.low-match {
-  background-color: #F56C6C;
+.back-btn:hover {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
 }
 
-.detail-content {
-  padding: 10px;
+.detail-body {
+  padding: 28px;
 }
 
-.detail-overview {
-  margin-bottom: 30px;
+.detail-section {
+  margin-bottom: 32px;
 }
 
-.detail-description {
-  color: #606266;
-  line-height: 1.6;
-  margin-bottom: 20px;
+.detail-desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.8;
+  margin: 0 0 20px;
 }
 
-.detail-stats {
+.overview-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
-.stat-box {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
+.overview-stat {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 16px;
   text-align: center;
+  border: 1px solid #e2e8f0;
 }
 
-.stat-title {
-  color: #909399;
-  margin-bottom: 10px;
-  font-size: 14px;
+.ov-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
 }
 
-.stat-value.lg {
+.ov-value {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.skill-requirements {
-  margin-bottom: 30px;
-}
-
-.skill-requirements h3, .learning-roadmap h3 {
-  font-size: 18px;
-  margin-bottom: 15px;
-  color: #333;
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f1f5f9;
 }
 
 .skill-groups {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
-.skill-group h4 {
-  font-size: 16px;
-  margin-bottom: 10px;
+.skill-group-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 14px;
 }
 
 .skill-item {
-  margin-bottom: 15px;
+  margin-bottom: 14px;
+}
+
+.skill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
 
 .skill-name {
+  font-size: 13px;
   font-weight: 500;
-  margin-bottom: 5px;
+  color: #334155;
 }
 
-.skill-level-bar {
-  margin-bottom: 10px;
+.skill-pcts {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
 }
 
-.skill-level-indicator {
-  height: 8px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
+.current-pct { color: #0ea5e9; }
+.required-pct { color: #94a3b8; }
+
+.skill-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
   position: relative;
-  margin-bottom: 5px;
+  overflow: hidden;
 }
 
-.required-level {
+.skill-required {
   position: absolute;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  background: #e2e8f0;
+  border-radius: 3px;
 }
 
-.current-level {
+.skill-current {
   position: absolute;
   height: 100%;
-  background-color: #409EFF;
-  border-radius: 4px;
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+  border-radius: 3px;
   z-index: 1;
 }
 
-.skill-level-text {
+/* ── Roadmap ── */
+.roadmap {
+  padding: 4px 0;
+}
+
+.roadmap-item {
   display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #909399;
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
-.roadmap-timeline {
-  padding: 10px 0;
-}
-
-.roadmap-stage {
-  display: flex;
-  margin-bottom: 30px;
-}
-
-.roadmap-stage:last-child {
+.roadmap-item:last-child {
   margin-bottom: 0;
 }
 
-.stage-indicator {
+.roadmap-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 15px;
+  flex-shrink: 0;
 }
 
-.stage-dot {
-  width: 20px;
-  height: 20px;
+.roadmap-dot {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background-color: #dcdfe6;
+  background: #cbd5e1;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #cbd5e1;
   z-index: 1;
+  flex-shrink: 0;
 }
 
-.stage-dot.completed {
-  background-color: #67C23A;
+.roadmap-dot.completed {
+  background: #10b981;
+  box-shadow: 0 0 0 2px #10b981;
 }
 
-.stage-line {
-  height: 100%;
-  width: 2px;
-  background-color: #dcdfe6;
-  margin: 5px 0;
-}
-
-.stage-content {
+.roadmap-line {
   flex: 1;
+  width: 2px;
+  background: #e2e8f0;
+  margin: 4px 0;
+  min-height: 24px;
 }
 
-.stage-header {
+.roadmap-content {
+  flex: 1;
+  padding-bottom: 4px;
+}
+
+.roadmap-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
-.stage-title {
+.roadmap-title {
+  font-size: 15px;
   font-weight: 600;
-  font-size: 16px;
+  color: #1e293b;
 }
 
-.stage-duration {
-  color: #909399;
-  font-size: 14px;
+.roadmap-duration {
+  font-size: 12px;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 2px 10px;
+  border-radius: 10px;
 }
 
-.stage-description {
-  color: #606266;
-  margin-bottom: 10px;
-}
-
-.stage-resources {
-  margin-top: 10px;
-}
-
-.stage-resource {
-  background-color: #f5f7fa;
-  padding: 5px 10px;
-  border-radius: 4px;
-  margin-right: 10px;
-  margin-bottom: 10px;
-  display: inline-block;
+.roadmap-desc {
   font-size: 13px;
-  color: #606266;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 10px;
 }
 
-.stage-resource i {
-  margin-right: 5px;
-  color: #409EFF;
+.roadmap-resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.action-buttons {
-  margin-top: 30px;
+.resource-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.resource-tag .el-icon {
+  font-size: 13px;
+  color: #0ea5e9;
+}
+
+/* ── Actions ── */
+.detail-actions {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
+  padding-top: 8px;
 }
 
-/* 响应式布局 */
 @media (max-width: 992px) {
   .skill-groups {
     grid-template-columns: 1fr;
   }
-  
-  .detail-stats {
+  .overview-stats {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .section-header {
+  .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
-  
-  .search-bar {
-    width: 100%;
-    margin-top: 10px;
-  }
-  
-  .career-paths {
-    grid-template-columns: 1fr;
-  }
-  
-  .career-stats {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .header-title {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .match-badge {
-    margin-left: 0;
-    margin-top: 10px;
-  }
+  .search-wrap { width: 100%; }
+  .career-grid { grid-template-columns: 1fr; }
+  .detail-hero { flex-wrap: wrap; }
+  .back-btn { width: 100%; }
 }
 </style>

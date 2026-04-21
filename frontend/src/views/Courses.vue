@@ -1,129 +1,138 @@
 <template>
   <div class="courses-container">
     <div class="page-header">
-      <h1 class="page-title">课程中心</h1>
-      <div class="search-bar">
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="搜索课程名称或关键词" 
+      <div class="header-left">
+        <h1 class="page-title">课程中心</h1>
+        <span class="course-count">共 {{ courses.length }} 门课程</span>
+      </div>
+      <div class="search-wrap">
+        <el-input
+          v-model="searchQuery"
+          placeholder="搜索课程名称或关键词"
           @input="searchCourses"
-        />
-        <button class="btn-search">
-          <i class="el-icon-search"></i>
-        </button>
+          clearable
+          size="large"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
       </div>
     </div>
-    
-    <div class="filters">
-      <div class="filter-group">
-        <span class="filter-label">学科领域：</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedCategory === 'all' }" 
-          @click="filterByCategory('all')"
-        >全部</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedCategory === 'computer-science' }" 
-          @click="filterByCategory('computer-science')"
-        >计算机科学</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedCategory === 'mathematics' }" 
-          @click="filterByCategory('mathematics')"
-        >数学</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedCategory === 'engineering' }" 
-          @click="filterByCategory('engineering')"
-        >工程学</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedCategory === 'humanities' }" 
-          @click="filterByCategory('humanities')"
-        >人文社科</span>
+
+    <div class="filters-panel">
+      <div class="filter-row">
+        <span class="filter-label">学科领域</span>
+        <div class="filter-tags">
+          <span
+            v-for="cat in categoryOptions"
+            :key="cat.value"
+            class="filter-tag"
+            :class="{ active: selectedCategory === cat.value }"
+            @click="filterByCategory(cat.value)"
+          >{{ cat.label }}</span>
+        </div>
       </div>
-      
-      <div class="filter-group">
-        <span class="filter-label">难度等级：</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedDifficulty === 'all' }" 
-          @click="filterByDifficulty('all')"
-        >全部</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedDifficulty === 'beginner' }" 
-          @click="filterByDifficulty('beginner')"
-        >入门</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedDifficulty === 'intermediate' }" 
-          @click="filterByDifficulty('intermediate')"
-        >中级</span>
-        <span 
-          class="filter-item" 
-          :class="{ active: selectedDifficulty === 'advanced' }" 
-          @click="filterByDifficulty('advanced')"
-        >高级</span>
+      <div class="filter-divider"></div>
+      <div class="filter-row">
+        <span class="filter-label">难度等级</span>
+        <div class="filter-tags">
+          <span class="filter-tag" :class="{ active: selectedDifficulty === 'all' }" @click="filterByDifficulty('all')">全部</span>
+          <span class="filter-tag diff-beginner" :class="{ active: selectedDifficulty === 'beginner' }" @click="filterByDifficulty('beginner')">入门</span>
+          <span class="filter-tag diff-intermediate" :class="{ active: selectedDifficulty === 'intermediate' }" @click="filterByDifficulty('intermediate')">中级</span>
+          <span class="filter-tag diff-advanced" :class="{ active: selectedDifficulty === 'advanced' }" @click="filterByDifficulty('advanced')">高级</span>
+        </div>
       </div>
     </div>
-    
+
+    <div class="result-bar">
+      <span class="result-count">找到 {{ allFiltered.length }} 门课程</span>
+    </div>
+
     <div class="course-list">
-      <div v-if="filteredCourses.length === 0" class="no-courses">
-        <i class="el-icon-document"></i>
-        <p>没有找到符合条件的课程</p>
+      <div v-if="allFiltered.length === 0" class="empty-state">
+        <el-icon class="empty-icon"><Document /></el-icon>
+        <p class="empty-text">没有找到符合条件的课程</p>
+        <el-button type="primary" link @click="resetFilters">清除筛选条件</el-button>
       </div>
-      
+
       <div v-else class="course-grid">
-        <div v-for="course in filteredCourses" :key="course.id" class="course-card" @click="viewCourseDetail(course.id)">
-          <div class="course-image" :style="{ 'background-image': `url(${course.image})` }">
-            <div class="course-difficulty" :class="course.difficulty">
-              {{ difficultyText[course.difficulty] }}
-            </div>
+        <div
+          v-for="course in filteredCourses"
+          :key="course.id"
+          class="course-card"
+          @click="viewCourseDetail(course.id)"
+        >
+          <div class="course-banner" :style="{ background: categoryConfig[course.category].gradient }">
+            <el-icon class="banner-icon"><component :is="categoryConfig[course.category].icon" /></el-icon>
+            <span class="diff-badge" :class="'diff-' + course.difficulty">{{ difficultyText[course.difficulty] }}</span>
           </div>
-          <div class="course-info">
+          <div class="course-body">
+            <div class="category-label">{{ categoryLabel[course.category] }}</div>
             <h3 class="course-title">{{ course.title }}</h3>
             <p class="course-desc">{{ course.description }}</p>
             <div class="course-meta">
-              <span class="course-instructor">
-                <i class="el-icon-user"></i> {{ course.instructor }}
+              <span class="meta-item">
+                <el-icon><User /></el-icon>
+                <span>{{ course.instructor }}</span>
               </span>
-              <span class="course-credits">
-                <i class="el-icon-data-analysis"></i> {{ course.credits }}学分
+              <span class="meta-item">
+                <el-icon><Tickets /></el-icon>
+                <span>{{ course.credits }} 学分</span>
               </span>
             </div>
-            <div class="course-progress" v-if="course.enrolled">
-              <div class="progress-bar">
-                <div class="progress-inner" :style="{ width: course.progress + '%' }"></div>
+            <div v-if="course.enrolled" class="progress-wrap">
+              <div class="progress-header">
+                <span class="progress-label">学习进度</span>
+                <span class="progress-pct">{{ course.progress }}%</span>
               </div>
-              <span class="progress-text">{{ course.progress }}% 完成</span>
+              <div class="progress-track">
+                <div class="progress-fill" :style="{ width: course.progress + '%' }"></div>
+              </div>
             </div>
-            <div class="course-actions">
-              <button class="btn-enroll" v-if="!course.enrolled">选课</button>
-              <button class="btn-continue" v-else>继续学习</button>
+            <div class="course-footer">
+              <el-tag v-if="course.enrolled" type="success" size="small" effect="plain">已选课</el-tag>
+              <el-tag v-else size="small" effect="plain">未选课</el-tag>
+              <el-button
+                v-if="!course.enrolled"
+                type="primary"
+                size="small"
+                @click.stop
+              >选课</el-button>
+              <el-button
+                v-else
+                type="primary"
+                plain
+                size="small"
+                @click.stop
+              >继续学习</el-button>
             </div>
           </div>
         </div>
       </div>
     </div>
-    
-    <div class="pagination">
-      <button class="btn-page" :disabled="currentPage === 1" @click="prevPage">
-        <i class="el-icon-arrow-left"></i>
-      </button>
+
+    <div class="pagination" v-if="totalPages > 1">
+      <el-button :disabled="currentPage === 1" @click="prevPage" circle size="small">
+        <el-icon><ArrowLeft /></el-icon>
+      </el-button>
       <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-      <button class="btn-page" :disabled="currentPage === totalPages" @click="nextPage">
-        <i class="el-icon-arrow-right"></i>
-      </button>
+      <el-button :disabled="currentPage === totalPages" @click="nextPage" circle size="small">
+        <el-icon><ArrowRight /></el-icon>
+      </el-button>
     </div>
   </div>
 </template>
 
 <script>
+import {
+  Search, User, Tickets, Document, ArrowLeft, ArrowRight,
+  Monitor, DataAnalysis, Setting, Reading
+} from '@element-plus/icons-vue'
+
 export default {
   name: "Courses",
+  components: { Search, User, Tickets, Document, ArrowLeft, ArrowRight, Monitor, DataAnalysis, Setting, Reading },
   data() {
     return {
       searchQuery: '',
@@ -136,7 +145,37 @@ export default {
         intermediate: '中级',
         advanced: '高级'
       },
-      // 模拟课程数据
+      categoryLabel: {
+        'computer-science': '计算机科学',
+        'mathematics': '数学',
+        'engineering': '工程学',
+        'humanities': '人文社科'
+      },
+      categoryOptions: [
+        { value: 'all', label: '全部' },
+        { value: 'computer-science', label: '计算机科学' },
+        { value: 'mathematics', label: '数学' },
+        { value: 'engineering', label: '工程学' },
+        { value: 'humanities', label: '人文社科' }
+      ],
+      categoryConfig: {
+        'computer-science': {
+          gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+          icon: 'Monitor'
+        },
+        'mathematics': {
+          gradient: 'linear-gradient(135deg, #78350f 0%, #f59e0b 100%)',
+          icon: 'DataAnalysis'
+        },
+        'engineering': {
+          gradient: 'linear-gradient(135deg, #3b0764 0%, #a855f7 100%)',
+          icon: 'Setting'
+        },
+        'humanities': {
+          gradient: 'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+          icon: 'Reading'
+        }
+      },
       courses: [
         {
           id: 1,
@@ -146,7 +185,6 @@ export default {
           credits: 4,
           category: 'computer-science',
           difficulty: 'intermediate',
-          image: 'https://via.placeholder.com/300x180?text=数据结构与算法',
           enrolled: true,
           progress: 65
         },
@@ -158,7 +196,6 @@ export default {
           credits: 5,
           category: 'mathematics',
           difficulty: 'beginner',
-          image: 'https://via.placeholder.com/300x180?text=高等数学',
           enrolled: true,
           progress: 85
         },
@@ -170,7 +207,6 @@ export default {
           credits: 3,
           category: 'computer-science',
           difficulty: 'intermediate',
-          image: 'https://via.placeholder.com/300x180?text=计算机网络',
           enrolled: false,
           progress: 0
         },
@@ -182,7 +218,6 @@ export default {
           credits: 4,
           category: 'computer-science',
           difficulty: 'advanced',
-          image: 'https://via.placeholder.com/300x180?text=操作系统原理',
           enrolled: false,
           progress: 0
         },
@@ -194,7 +229,6 @@ export default {
           credits: 2,
           category: 'humanities',
           difficulty: 'beginner',
-          image: 'https://via.placeholder.com/300x180?text=工程伦理学',
           enrolled: true,
           progress: 30
         },
@@ -206,7 +240,6 @@ export default {
           credits: 3,
           category: 'engineering',
           difficulty: 'intermediate',
-          image: 'https://via.placeholder.com/300x180?text=机械设计基础',
           enrolled: false,
           progress: 0
         }
@@ -214,63 +247,57 @@ export default {
     }
   },
   computed: {
-    filteredCourses() {
-      let result = this.courses;
-      
-      // 根据搜索关键词筛选
+    allFiltered() {
+      let result = this.courses
       if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(course => 
-          course.title.toLowerCase().includes(query) || 
-          course.description.toLowerCase().includes(query)
-        );
+        const q = this.searchQuery.toLowerCase()
+        result = result.filter(c =>
+          c.title.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q)
+        )
       }
-      
-      // 根据分类筛选
       if (this.selectedCategory !== 'all') {
-        result = result.filter(course => course.category === this.selectedCategory);
+        result = result.filter(c => c.category === this.selectedCategory)
       }
-      
-      // 根据难度筛选
       if (this.selectedDifficulty !== 'all') {
-        result = result.filter(course => course.difficulty === this.selectedDifficulty);
+        result = result.filter(c => c.difficulty === this.selectedDifficulty)
       }
-      
-      // 分页
-      const startIndex = (this.currentPage - 1) * this.coursesPerPage;
-      return result.slice(startIndex, startIndex + this.coursesPerPage);
+      return result
+    },
+    filteredCourses() {
+      const start = (this.currentPage - 1) * this.coursesPerPage
+      return this.allFiltered.slice(start, start + this.coursesPerPage)
     },
     totalPages() {
-      // 计算总页数
-      return Math.ceil(this.courses.length / this.coursesPerPage);
+      return Math.max(1, Math.ceil(this.allFiltered.length / this.coursesPerPage))
     }
   },
   methods: {
     searchCourses() {
-      // 搜索时重置页码
-      this.currentPage = 1;
+      this.currentPage = 1
     },
     filterByCategory(category) {
-      this.selectedCategory = category;
-      this.currentPage = 1;
+      this.selectedCategory = category
+      this.currentPage = 1
     },
     filterByDifficulty(difficulty) {
-      this.selectedDifficulty = difficulty;
-      this.currentPage = 1;
+      this.selectedDifficulty = difficulty
+      this.currentPage = 1
+    },
+    resetFilters() {
+      this.searchQuery = ''
+      this.selectedCategory = 'all'
+      this.selectedDifficulty = 'all'
+      this.currentPage = 1
     },
     viewCourseDetail(courseId) {
-      // 跳转到课程详情页
-      this.$router.push(`/courses/${courseId}`);
+      this.$router.push(`/courses/${courseId}`)
     },
     prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
+      if (this.currentPage > 1) this.currentPage--
     },
     nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
+      if (this.currentPage < this.totalPages) this.currentPage++
     }
   }
 }
@@ -278,9 +305,11 @@ export default {
 
 <style scoped>
 .courses-container {
-  padding: 20px;
+  padding: 28px 24px;
+  min-height: 100%;
 }
 
+/* ── Header ── */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -288,244 +317,288 @@ export default {
   margin-bottom: 20px;
 }
 
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .page-title {
-  font-size: 24px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
   margin: 0;
 }
 
-.search-bar {
+.course-count {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.search-wrap {
+  width: 320px;
+}
+
+/* ── Filters ── */
+.filters-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.filter-row {
   display: flex;
-  width: 360px;
-}
-
-.search-bar input {
-  flex: 1;
-  padding: 10px 15px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px 0 0 4px;
-  font-size: 14px;
-}
-
-.btn-search {
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  padding: 0 15px;
-  cursor: pointer;
-}
-
-.filters {
-  background: white;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-}
-
-.filter-group {
-  margin-bottom: 10px;
-}
-
-.filter-group:last-child {
-  margin-bottom: 0;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .filter-label {
-  color: #606266;
-  margin-right: 10px;
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
-.filter-item {
-  display: inline-block;
-  padding: 6px 12px;
-  margin-right: 8px;
-  border-radius: 4px;
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-tag {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
+  user-select: none;
 }
 
-.filter-item:hover {
-  background-color: #f5f7fa;
+.filter-tag:hover {
+  background: #e2e8f0;
+  color: #334155;
 }
 
-.filter-item.active {
-  background-color: #e6f2ff;
-  color: #0066cc;
+.filter-tag.active {
+  background: #0ea5e9;
+  color: #fff;
 }
 
+.diff-beginner.active { background: #10b981; }
+.diff-intermediate.active { background: #f59e0b; }
+.diff-advanced.active { background: #ef4444; }
+
+.filter-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+
+/* ── Result bar ── */
+.result-bar {
+  margin-bottom: 16px;
+}
+
+.result-count {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ── Grid ── */
 .course-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
 .course-card {
-  background: white;
-  border-radius: 4px;
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
 }
 
-.course-image {
-  height: 180px;
-  background-size: cover;
-  background-position: center;
+/* ── Banner ── */
+.course-banner {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-.course-difficulty {
+.banner-icon {
+  font-size: 48px;
+  color: rgba(255,255,255,0.85);
+}
+
+.diff-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 4px 8px;
-  border-radius: 2px;
-  font-size: 12px;
-  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
 }
 
-.course-difficulty.beginner {
-  background-color: #67c23a;
+.diff-badge.diff-beginner  { background: rgba(16,185,129,0.75); }
+.diff-badge.diff-intermediate { background: rgba(245,158,11,0.75); }
+.diff-badge.diff-advanced  { background: rgba(239,68,68,0.75); }
+
+/* ── Body ── */
+.course-body {
+  padding: 16px;
 }
 
-.course-difficulty.intermediate {
-  background-color: #e6a23c;
-}
-
-.course-difficulty.advanced {
-  background-color: #f56c6c;
-}
-
-.course-info {
-  padding: 15px;
+.category-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0ea5e9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
 }
 
 .course-title {
-  margin: 0 0 10px;
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+  line-height: 1.4;
 }
 
 .course-desc {
-  color: #666;
-  margin: 0 0 15px;
-  font-size: 14px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 12px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.5;
-  height: 3em;
 }
 
 .course-meta {
   display: flex;
-  justify-content: space-between;
-  color: #909399;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.meta-item .el-icon {
   font-size: 13px;
-  margin-bottom: 15px;
 }
 
-.course-progress {
-  margin-bottom: 15px;
+/* ── Progress ── */
+.progress-wrap {
+  margin-bottom: 12px;
 }
 
-.progress-bar {
-  height: 6px;
-  background-color: #ebeef5;
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.progress-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0ea5e9;
+}
+
+.progress-track {
+  height: 5px;
+  background: #e2e8f0;
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 5px;
 }
 
-.progress-inner {
+.progress-fill {
   height: 100%;
-  background-color: #0066cc;
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
   border-radius: 3px;
+  transition: width 0.4s ease;
 }
 
-.progress-text {
-  color: #606266;
-  font-size: 12px;
+/* ── Footer ── */
+.course-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
 }
 
-.course-actions {
+/* ── Empty state ── */
+.empty-state {
   text-align: center;
+  padding: 60px 0;
+  color: #94a3b8;
 }
 
-.btn-enroll, .btn-continue {
-  width: 100%;
-  padding: 8px 0;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.empty-icon {
+  font-size: 52px;
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.empty-text {
   font-size: 14px;
+  margin: 0 0 12px;
 }
 
-.btn-enroll {
-  background-color: #0066cc;
-  color: white;
-}
-
-.btn-continue {
-  background-color: #e6f2ff;
-  color: #0066cc;
-}
-
-.no-courses {
-  text-align: center;
-  padding: 50px 0;
-  color: #909399;
-}
-
-.no-courses i {
-  font-size: 48px;
-  margin-bottom: 10px;
-}
-
+/* ── Pagination ── */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 30px;
-}
-
-.btn-page {
-  border: 1px solid #dcdfe6;
-  background-color: white;
-  padding: 6px 12px;
-  margin: 0 5px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-page:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  gap: 12px;
+  margin-top: 32px;
 }
 
 .page-info {
-  color: #606266;
+  font-size: 13px;
+  color: #64748b;
+  min-width: 60px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
-  
-  .search-bar {
+  .search-wrap {
     width: 100%;
-    margin-top: 15px;
   }
-  
   .course-grid {
     grid-template-columns: 1fr;
   }
