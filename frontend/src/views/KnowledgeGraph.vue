@@ -455,6 +455,8 @@ export default {
 
       // 已展开的课程 code 集合
       expandedNodes: new Set(),
+      // 正在展开中的课程 code（防止并发双击）
+      expandingNodes: new Set(),
       // 记录每个课程展开后的子节点 id
       childrenMap: {},
 
@@ -584,6 +586,7 @@ export default {
 
       this.destroyNetwork()
       this.expandedNodes = new Set()
+      this.expandingNodes = new Set()
       this.childrenMap = {}
 
       const visibleCourses = this.getVisibleCourseNodes()
@@ -674,46 +677,59 @@ export default {
     },
 
     async expandNode(courseCode) {
-      let expandData = null
+      // 并发守卫：同一节点正在展开中则直接返回
+      if (this.expandingNodes.has(courseCode)) return
+      this.expandingNodes.add(courseCode)
+
       try {
-        const token = localStorage.getItem('token')
-        const res = await fetch(`${BASE_URL}/api/knowledge_graph/expand/${courseCode}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.nodes && data.nodes.length > 0) {
-            expandData = data
+        let expandData = null
+        try {
+          const token = localStorage.getItem('token')
+          const res = await fetch(`${BASE_URL}/api/knowledge_graph/expand/${courseCode}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.nodes && data.nodes.length > 0) expandData = data
           }
+        } catch (e) {
+          console.warn('expand API 失败，使用 mock 数据', e)
         }
-      } catch (e) {
-        console.warn('expand API 失败，使用 mock 数据', e)
-      }
 
-      // API 返回空或失败时，降级到 mock 数据
-      if (!expandData) {
-        expandData = MOCK_EXPAND[courseCode] || { nodes: [], edges: [] }
-      }
-
-      const newNodeItems = (expandData.nodes || []).map(n => this.buildNodeItem(n))
-      const newEdgeItems = (expandData.edges || []).map((e, i) => this.buildEdgeItem(e, `expand_${courseCode}_${i}`))
-
-      if (newNodeItems.length === 0) return  // 真的没有数据则跳过
-
-      const childIds = newNodeItems.map(n => n.id)
-      this.childrenMap[courseCode] = childIds
-
-      this.nodesDataSet.add(newNodeItems)
-      this.edgesDataSet.add(newEdgeItems)
-      this.expandedNodes.add(courseCode)
-
-      // 临时开启 physics 让节点自然弹开
-      this.network.setOptions({ physics: { enabled: true } })
-      setTimeout(() => {
-        if (this.network) {
-          this.network.setOptions({ physics: { enabled: false } })
+        // API 返回空或失败时降级到 mock
+        if (!expandData) {
+          expandData = MOCK_EXPAND[courseCode] || { nodes: [], edges: [] }
         }
-      }, 1500)
+
+        // 过滤掉 DataSet 中已存在的节点（防御性去重）
+        const existingNodeIds = new Set(this.nodesDataSet.getIds())
+        const existingEdgeIds = new Set(this.edgesDataSet.getIds())
+
+        const newNodeItems = (expandData.nodes || [])
+          .filter(n => !existingNodeIds.has(n.id))
+          .map(n => this.buildNodeItem(n))
+
+        const newEdgeItems = (expandData.edges || [])
+          .map((e, i) => this.buildEdgeItem(e, `expand_${courseCode}_${i}`))
+          .filter(e => !existingEdgeIds.has(e.id))
+
+        if (newNodeItems.length === 0) return
+
+        const childIds = newNodeItems.map(n => n.id)
+        this.childrenMap[courseCode] = childIds
+
+        this.nodesDataSet.add(newNodeItems)
+        this.edgesDataSet.add(newEdgeItems)
+        this.expandedNodes.add(courseCode)
+
+        // 临时开启 physics 让节点自然弹开
+        this.network.setOptions({ physics: { enabled: true } })
+        setTimeout(() => {
+          if (this.network) this.network.setOptions({ physics: { enabled: false } })
+        }, 1500)
+      } finally {
+        this.expandingNodes.delete(courseCode)
+      }
     },
 
     collapseNode(courseCode) {
