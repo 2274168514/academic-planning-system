@@ -70,7 +70,7 @@
 </template>
 
 <script>
-import { Network } from 'vis-network/standalone'
+import { Network, DataSet } from 'vis-network/standalone'
 import { Search } from '@element-plus/icons-vue'
 
 const COURSES = [
@@ -107,6 +107,7 @@ export default {
   data() {
     return {
       network: null,
+      nodesDataSet: null,
       selectedCourse: null,
       searchText: '',
       filter: 'all'
@@ -137,8 +138,7 @@ export default {
         font: { color: '#fff', size: 13 },
         size: c.credit * 8,
         shape: 'circle',
-        title: c.label,
-        ...c
+        title: c.label
       }))
       const edges = EDGES
         .filter(e => ids.has(e.from) && ids.has(e.to))
@@ -172,7 +172,8 @@ export default {
         edges: { width: 1.5 }
       }
       if (this.network) this.network.destroy()
-      this.network = new Network(container, { nodes, edges }, options)
+      this.nodesDataSet = new DataSet(nodes)
+      this.network = new Network(container, { nodes: this.nodesDataSet, edges }, options)
       this.network.on('click', params => {
         if (params.nodes.length) {
           const id = params.nodes[0]
@@ -197,7 +198,7 @@ export default {
           font: { color: match ? '#fff' : '#aaa' }
         }
       })
-      this.network.body.data.nodes.update(updates)
+      if (this.nodesDataSet) this.nodesDataSet.update(updates)
     },
 
     setFilter(val) {
