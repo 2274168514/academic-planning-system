@@ -428,7 +428,7 @@ const NODE_COLORS = {
   knowledge_point: { bg: '#a855f7', border: '#9333ea' },
   skill: { bg: '#f59e0b', border: '#d97706' },
   selected: { bg: '#f97316', border: '#ea580c' },
-  dimmed: { bg: '#374151', border: '#4b5563' },
+  dimmed: { bg: '#cbd5e1', border: '#e2e8f0' },  // 白色背景下用浅灰暗化
 }
 
 const RELATION_LABEL = {
@@ -766,8 +766,8 @@ export default {
           return {
             id,
             color: { background: NODE_COLORS.dimmed.bg, border: NODE_COLORS.dimmed.border },
-            opacity: 0.4,
-            font: { color: '#9ca3af' }
+            opacity: 0.5,
+            font: { color: '#94a3b8' }
           }
         }
       })
@@ -777,7 +777,7 @@ export default {
         if (connectedEdgeIds.has(eid)) {
           return { id: eid, color: { color: '#f59e0b', highlight: '#f59e0b' }, width: 2 }
         } else {
-          return { id: eid, color: { color: '#1e2a3a' }, width: 0.5 }
+          return { id: eid, color: { color: '#e2e8f0' }, width: 0.5 }
         }
       })
       this.edgesDataSet.update(edgeUpdates)
@@ -1010,15 +1010,15 @@ export default {
   position: relative;
   border-radius: 10px;
   overflow: hidden;
-  background: #0d1117;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .kg-graph {
   width: 100%;
   height: 100%;
-  background: #0d1117;
-  background-image: radial-gradient(circle, #1c2433 1px, transparent 1px);
+  background: #ffffff;
+  background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
@@ -1026,13 +1026,13 @@ export default {
 .kg-loading {
   position: absolute;
   inset: 0;
-  background: rgba(13, 17, 23, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 14px;
   z-index: 10;
 }
@@ -1040,7 +1040,7 @@ export default {
 .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #1e293b;
+  border: 3px solid #e2e8f0;
   border-top-color: #0ea5e9;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -1057,10 +1057,11 @@ export default {
   left: 16px;
   display: flex;
   gap: 14px;
-  background: rgba(22, 27, 34, 0.9);
-  border: 1px solid #30363d;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .legend-item {
@@ -1068,7 +1069,7 @@ export default {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .legend-dot {
