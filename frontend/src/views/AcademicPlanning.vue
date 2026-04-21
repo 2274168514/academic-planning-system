@@ -7,70 +7,106 @@
         <el-tabs v-model="activeTab" type="border-card">
           <el-tab-pane name="semester" label="学期规划">
             <div class="semester-header">
-              <h3>2023-2024学年 第二学期</h3>
+              <div class="plan-selector">
+                <el-select
+                  v-model="currentPlanId"
+                  placeholder="选择学习计划"
+                  style="width: 220px"
+                  @change="loadPlanDetails"
+                >
+                  <el-option
+                    v-for="plan in plans"
+                    :key="plan.plan_id"
+                    :label="plan.plan_name"
+                    :value="plan.plan_id"
+                  />
+                </el-select>
+                <el-button
+                  v-if="currentPlanId"
+                  type="danger"
+                  plain
+                  size="small"
+                  style="margin-left: 8px"
+                  @click="confirmDeletePlan"
+                >删除计划</el-button>
+              </div>
               <div class="actions">
-                <el-button type="primary" size="small" @click="addCourse">添加课程</el-button>
-                <el-button size="small" @click="switchSemester">切换学期</el-button>
+                <el-button type="primary" size="small" @click="openAddCourseDialog">添加课程</el-button>
+                <el-button type="success" size="small" @click="showCreatePlanDialog = true">新建计划</el-button>
               </div>
             </div>
-            
-            <div class="credit-summary">
-              <div class="summary-item">
-                <div class="label">已选学分</div>
-                <div class="value">16</div>
-              </div>
-              <div class="summary-item">
-                <div class="label">建议学分</div>
-                <div class="value">18-22</div>
-              </div>
-              <div class="summary-item">
-                <div class="label">已修学分</div>
-                <div class="value">86</div>
-              </div>
-              <div class="summary-item">
-                <div class="label">总学分要求</div>
-                <div class="value">160</div>
-              </div>
+
+            <div v-if="!plans.length && !planLoading" class="empty-tip">
+              <el-empty description="暂无学习计划，点击「新建计划」创建" />
             </div>
-            
-            <el-table :data="semesterCourses" style="width: 100%" border>
-              <el-table-column prop="code" label="课程编号" width="120"></el-table-column>
-              <el-table-column prop="name" label="课程名称"></el-table-column>
-              <el-table-column prop="type" label="课程类型" width="120"></el-table-column>
-              <el-table-column prop="credits" label="学分" width="80" align="center"></el-table-column>
-              <el-table-column prop="hours" label="学时" width="80" align="center"></el-table-column>
-              <el-table-column prop="instructor" label="任课教师"></el-table-column>
-              <el-table-column label="操作" width="150" align="center">
+
+            <el-table
+              v-if="currentPlanId"
+              v-loading="planLoading"
+              :data="currentPlanDetails"
+              style="width: 100%"
+              border
+            >
+              <el-table-column prop="course.course_name" label="课程名称" />
+              <el-table-column prop="course.course_type" label="类型" width="100" />
+              <el-table-column prop="course.credit" label="学分" width="80" align="center" />
+              <el-table-column prop="semester" label="学期" width="140" />
+              <el-table-column prop="priority" label="优先级" width="90" align="center" />
+              <el-table-column prop="status" label="状态" width="110">
                 <template #default="scope">
-                  <el-button type="text" size="small" @click="viewCourseDetails(scope.row)">详情</el-button>
-                  <el-button type="text" size="small" class="danger-text" @click="removeCourse(scope.row)">删除</el-button>
+                  <el-tag :type="statusTagType(scope.row.status)" size="small">
+                    {{ statusLabel(scope.row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="90" align="center">
+                <template #default="scope">
+                  <el-button type="text" size="small" class="danger-text" @click="removeDetail(scope.row)">移除</el-button>
                 </template>
               </el-table-column>
             </el-table>
-            
-            <div class="schedule-view">
-              <h3>课程表视图</h3>
-              <div class="weekly-schedule">
-                <div class="time-column">
-                  <div class="header-cell"></div>
-                  <div class="time-cell" v-for="time in timeSlots" :key="time.id">
-                    第{{time.slot}}节<br>
-                    <span class="time-detail">{{time.time}}</span>
-                  </div>
-                </div>
-                <div v-for="day in weekDays" :key="day.id" class="day-column">
-                  <div class="header-cell">{{day.name}}</div>
-                  <div class="schedule-cell" v-for="time in timeSlots" :key="`${day.id}-${time.id}`"
-                    :class="{ 'has-course': hasCourse(day.id, time.id) }"
-                    @click="showCourseAt(day.id, time.id)">
-                    <div v-if="hasCourse(day.id, time.id)" class="course-brief">
-                      {{getCourseAt(day.id, time.id).name}}<br>
-                      <span class="location">{{getCourseAt(day.id, time.id).location}}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+
+            <!-- 新建计划弹窗 -->
+            <el-dialog v-model="showCreatePlanDialog" title="新建学习计划" width="440px" @close="resetCreateForm">
+              <el-form :model="createPlanForm" label-width="80px">
+                <el-form-item label="计划名称">
+                  <el-input v-model="createPlanForm.plan_name" placeholder="请输入计划名称" />
+                </el-form-item>
+                <el-form-item label="描述">
+                  <el-input v-model="createPlanForm.description" type="textarea" :rows="3" placeholder="选填" />
+                </el-form-item>
+              </el-form>
+              <template #footer>
+                <el-button @click="showCreatePlanDialog = false">取消</el-button>
+                <el-button type="primary" :loading="createPlanLoading" @click="submitCreatePlan">创建</el-button>
+              </template>
+            </el-dialog>
+
+            <!-- 添加课程弹窗 -->
+            <el-dialog v-model="showAddCourseDialog" title="添加课程到计划" width="440px" @close="resetAddCourseForm">
+              <el-form :model="addCourseForm" label-width="80px">
+                <el-form-item label="课程">
+                  <el-select v-model="addCourseForm.course_id" placeholder="选择课程" style="width: 100%">
+                    <el-option
+                      v-for="c in allCourses"
+                      :key="c.course_id"
+                      :label="`${c.course_name}（${c.credit}学分）`"
+                      :value="c.course_id"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="学期">
+                  <el-input v-model="addCourseForm.semester" placeholder="如：大二上学期" />
+                </el-form-item>
+                <el-form-item label="优先级">
+                  <el-input-number v-model="addCourseForm.priority" :min="1" :max="5" />
+                </el-form-item>
+              </el-form>
+              <template #footer>
+                <el-button @click="showAddCourseDialog = false">取消</el-button>
+                <el-button type="primary" :loading="addCourseLoading" @click="submitAddCourse">添加</el-button>
+              </template>
+            </el-dialog>
           </el-tab-pane>
           
           <el-tab-pane name="degree" label="学位要求">
@@ -162,18 +198,24 @@
 </template>
 
 <script>
+import { planningApi, courseApi } from '@/utils/api'
+
 export default {
   name: "AcademicPlanning",
   data() {
     return {
       activeTab: 'semester',
-      semesterCourses: [
-        { code: 'CS301', name: '数据库原理', type: '专业必修', credits: 4, hours: 64, instructor: '李教授' },
-        { code: 'CS302', name: '软件工程', type: '专业必修', credits: 3, hours: 48, instructor: '王教授' },
-        { code: 'CS305', name: '人工智能导论', type: '专业选修', credits: 3, hours: 48, instructor: '张教授' },
-        { code: 'MATH201', name: '概率论与数理统计', type: '学科基础', credits: 4, hours: 64, instructor: '刘教授' },
-        { code: 'GE102', name: '中国近代史纲要', type: '通识教育', credits: 2, hours: 32, instructor: '赵教授' }
-      ],
+      plans: [],
+      currentPlanId: null,
+      currentPlanDetails: [],
+      planLoading: false,
+      showCreatePlanDialog: false,
+      createPlanForm: { plan_name: '', description: '' },
+      createPlanLoading: false,
+      showAddCourseDialog: false,
+      addCourseForm: { course_id: null, semester: '', priority: 1 },
+      addCourseLoading: false,
+      allCourses: [],
       timeSlots: [
         { id: 1, slot: '1-2', time: '8:00-9:40' },
         { id: 2, slot: '3-4', time: '10:00-11:40' },
@@ -274,6 +316,9 @@ export default {
       ]
     }
   },
+  mounted() {
+    this.loadPlans()
+  },
   methods: {
     format(percentage) {
       return `${percentage}%`;
@@ -291,54 +336,136 @@ export default {
       const found = this.scheduleData.find(item => item.day === day && item.time === time);
       return found ? found.course : null;
     },
-    addCourse() {
-      // 实现添加课程的逻辑
-      this.$message({
-        message: '打开课程选择对话框',
-        type: 'info'
-      });
-    },
-    switchSemester() {
-      // 实现切换学期的逻辑
-      this.$message({
-        message: '切换到不同学期',
-        type: 'info'
-      });
-    },
-    viewCourseDetails(course) {
-      // 实现查看课程详情的逻辑
-      this.$message({
-        message: `查看课程：${course.name}`,
-        type: 'info'
-      });
-    },
-    removeCourse(course) {
-      // 实现删除课程的逻辑
-      this.$confirm(`确定要从学期计划中移除 ${course.name} 吗?`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '删除成功!'
-        });
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消删除'
-        });          
-      });
-    },
-    showCourseAt(day, time) {
-      if (this.hasCourse(day, time)) {
-        const course = this.getCourseAt(day, time);
-        this.$message({
-          message: `${course.name} - ${course.location}`,
-          type: 'info'
-        });
+    async loadPlans() {
+      try {
+        const res = await planningApi.getPlans()
+        this.plans = res.plans || []
+        if (this.plans.length && !this.currentPlanId) {
+          this.currentPlanId = this.plans[0].plan_id
+          await this.loadPlanDetails()
+        }
+      } catch (e) {
+        this.$message.error('加载计划列表失败')
       }
-    }
+    },
+
+    async loadPlanDetails() {
+      if (!this.currentPlanId) return
+      this.planLoading = true
+      try {
+        const res = await planningApi.getPlan(this.currentPlanId)
+        this.currentPlanDetails = (res.plan && res.plan.details) || []
+      } catch (e) {
+        this.$message.error('加载计划详情失败')
+      } finally {
+        this.planLoading = false
+      }
+    },
+
+    async submitCreatePlan() {
+      if (!this.createPlanForm.plan_name.trim()) {
+        this.$message.warning('请输入计划名称')
+        return
+      }
+      this.createPlanLoading = true
+      try {
+        const res = await planningApi.createPlan(this.createPlanForm)
+        this.$message.success('创建成功')
+        this.showCreatePlanDialog = false
+        await this.loadPlans()
+        this.currentPlanId = res.plan.plan_id
+        await this.loadPlanDetails()
+      } catch (e) {
+        this.$message.error('创建失败')
+      } finally {
+        this.createPlanLoading = false
+      }
+    },
+
+    async confirmDeletePlan() {
+      try {
+        await this.$confirm('确定删除该计划吗？', '提示', {
+          confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+        })
+        await planningApi.deletePlan(this.currentPlanId)
+        this.$message.success('删除成功')
+        this.currentPlanId = null
+        this.currentPlanDetails = []
+        await this.loadPlans()
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('删除失败')
+      }
+    },
+
+    async openAddCourseDialog() {
+      if (!this.currentPlanId) {
+        this.$message.warning('请先选择或创建一个计划')
+        return
+      }
+      if (!this.allCourses.length) {
+        try {
+          const res = await courseApi.getCourses({ per_page: 100 })
+          this.allCourses = res.courses || []
+        } catch (e) {
+          this.$message.error('加载课程列表失败')
+          return
+        }
+      }
+      this.showAddCourseDialog = true
+    },
+
+    async submitAddCourse() {
+      if (!this.addCourseForm.course_id) {
+        this.$message.warning('请选择课程')
+        return
+      }
+      if (!this.addCourseForm.semester.trim()) {
+        this.$message.warning('请填写学期')
+        return
+      }
+      this.addCourseLoading = true
+      try {
+        await planningApi.addDetail(this.currentPlanId, this.addCourseForm)
+        this.$message.success('添加成功')
+        this.showAddCourseDialog = false
+        await this.loadPlanDetails()
+      } catch (e) {
+        this.$message.error('添加失败')
+      } finally {
+        this.addCourseLoading = false
+      }
+    },
+
+    async removeDetail(row) {
+      try {
+        await this.$confirm(`确定移除课程「${row.course.course_name}」吗？`, '提示', {
+          confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+        })
+        await planningApi.removeDetail(this.currentPlanId, row.detail_id)
+        this.$message.success('已移除')
+        await this.loadPlanDetails()
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('移除失败')
+      }
+    },
+
+    resetCreateForm() {
+      this.createPlanForm = { plan_name: '', description: '' }
+    },
+
+    resetAddCourseForm() {
+      this.addCourseForm = { course_id: null, semester: '', priority: 1 }
+    },
+
+    statusTagType(status) {
+      const map = { pending: 'info', in_progress: 'warning', completed: 'success' }
+      return map[status] || 'info'
+    },
+
+    statusLabel(status) {
+      const map = { pending: '待开始', in_progress: '进行中', completed: '已完成' }
+      return map[status] || status
+    },
   }
 }
 </script>
@@ -369,6 +496,15 @@ export default {
 
 .semester-header h3 {
   margin: 0;
+}
+
+.plan-selector {
+  display: flex;
+  align-items: center;
+}
+
+.empty-tip {
+  padding: 40px 0;
 }
 
 .actions {
