@@ -17,11 +17,14 @@
             </el-select>
           </div>
           <div class="progress-circle">
-            <el-progress type="circle" :percentage="75" :width="140"></el-progress>
-            <div class="progress-detail">
-              <div class="main">75%</div>
-              <div class="sub-text">已完成/总计</div>
-            </div>
+            <el-progress type="circle" :percentage="75" :width="140">
+              <template #default="{ percentage }">
+                <div class="progress-detail">
+                  <div class="main">{{ percentage }}%</div>
+                  <div class="sub-text">已完成/总计</div>
+                </div>
+              </template>
+            </el-progress>
           </div>
           <div class="card-footer">
             <div class="stat-item">
@@ -515,10 +518,6 @@ export default {
 }
 
 .progress-detail {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   text-align: center;
 }
 
