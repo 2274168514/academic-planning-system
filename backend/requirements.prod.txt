@@ -1,0 +1,17 @@
+# 生产环境依赖（去除 AI/ML 重型包，节省约 400MB 磁盘空间）
+# AI 对话功能需要 DeepSeek API Key，配置好后直接可用
+# RAG 知识库功能如需启用，另行安装 langchain faiss-cpu
+
+Flask==2.2.3
+Werkzeug==2.3.8
+Flask-SQLAlchemy==3.0.3
+Flask-Migrate==4.0.4
+Flask-Cors==3.0.10
+Flask-JWT-Extended==4.4.4
+python-dotenv==1.0.0
+pymysql==1.1.1
+cryptography==41.0.1
+requests==2.31.0
+python-dateutil==2.8.2
+bcrypt==4.0.1
+gunicorn==21.2.0

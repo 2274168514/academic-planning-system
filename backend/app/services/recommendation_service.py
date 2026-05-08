@@ -1,8 +1,6 @@
 import logging
 from ..models import Course, LearningRecord, User, StudyPlan
 from .. import db
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 class RecommendationService:
     """推荐服务类，用于生成个性化推荐"""

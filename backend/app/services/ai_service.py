@@ -1,11 +1,6 @@
 import requests
 import json
 import logging
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
 
 class AIService:
     """AI服务类，用于处理与DeepSeek API的交互"""
@@ -13,17 +8,10 @@ class AIService:
     def __init__(self):
         """初始化"""
         from flask import current_app
-        # 从应用配置获取API设置
         self.api_key = current_app.config.get('DEEPSEEK_API_KEY')
         self.api_url = current_app.config.get('DEEPSEEK_API_URL')
         self.model_name = current_app.config.get('DEEPSEEK_MODEL')
-        
-        self.embeddings = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
         self.vector_store = None
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        )
         logging.info(f"AI服务初始化，API URL: {self.api_url}, 模型: {self.model_name}")
 
     def get_headers(self):
@@ -166,14 +154,18 @@ class AIService:
         Returns:
             bool: 是否成功
         """
-        # 切分文档
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-        texts = text_splitter.split_documents(documents)
-        
         try:
-            # 创建向量存储
-            self.vector_store = FAISS.from_documents(texts, self.embeddings)
+            from langchain.text_splitter import RecursiveCharacterTextSplitter
+            from langchain.embeddings import HuggingFaceEmbeddings
+            from langchain.vectorstores import FAISS
+            embeddings = HuggingFaceEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+            texts = text_splitter.split_documents(documents)
+            self.vector_store = FAISS.from_documents(texts, embeddings)
             return True
+        except ImportError:
+            logging.warning("langchain 未安装，RAG 知识库功能不可用")
+            return False
         except Exception as e:
             logging.error(f"创建知识库失败: {str(e)}")
             return False
@@ -189,8 +181,8 @@ class AIService:
             str: 回答结果
         """
         if not self.vector_store:
-            return "知识库尚未初始化"
-        
+            return "知识库尚未初始化，RAG 功能需要先安装 langchain 并创建知识库"
+
         try:
             # 创建检索链
             retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
