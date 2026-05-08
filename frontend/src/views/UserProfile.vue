@@ -11,9 +11,9 @@
               <i class="el-icon-camera"></i>
             </div>
           </div>
-          <h2 class="user-name">张三</h2>
-          <p class="user-role">计算机科学专业</p>
-          <p class="user-id">学号: 2023102445</p>
+          <h2 class="user-name">{{ userInfo.username || '未设置' }}</h2>
+          <p class="user-role">{{ userInfo.major || '暂未设置专业' }}</p>
+          <p class="user-id">{{ userInfo.email || '' }}</p>
           <div class="user-stat">
             <div class="stat-item">
               <div class="stat-value">8</div>
@@ -103,8 +103,8 @@
                 <el-input type="textarea" v-model="userInfo.bio" rows="4" placeholder="请输入个人简介"></el-input>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary">保存修改</el-button>
-                <el-button>取消</el-button>
+                <el-button type="primary" :loading="saving" @click="saveProfile">保存修改</el-button>
+                <el-button @click="resetForm">取消</el-button>
               </el-form-item>
             </el-form>
           </el-tab-pane>
@@ -170,24 +170,82 @@
 </template>
 
 <script>
+import { userApi } from '../utils/api'
+import { ElMessage } from 'element-plus'
+
 export default {
   name: "UserProfile",
   data() {
     return {
       activeTab: 'basic',
+      saving: false,
       userInfo: {
-        name: '张三',
-        studentId: '2023102445',
-        email: 'example@example.com',
-        phone: '13812345678',
-        major: '计算机科学与技术',
-        grade: '大三',
-        bio: '热爱学习和探索新知识，对人工智能和数据科学特别感兴趣。'
-      }
+        username: '',
+        email: '',
+        phone: '',
+        major: '',
+        grade: '',
+      },
+      originalInfo: {}
     }
   },
+  mounted() {
+    this.loadProfile()
+  },
   methods: {
-    // 可添加相关方法
+    async loadProfile() {
+      try {
+        const res = await userApi.getProfile()
+        const u = res.user || res
+        this.userInfo = {
+          username: u.username || '',
+          email: u.email || '',
+          phone: u.phone || '',
+          major: u.major || '',
+          grade: u.grade || '',
+        }
+        this.originalInfo = { ...this.userInfo }
+      } catch (e) {
+        // 加载失败时使用 store 里的数据兜底
+        const stored = this.$store.getters.currentUser
+        if (stored) {
+          this.userInfo = {
+            username: stored.username || '',
+            email: stored.email || '',
+            phone: stored.phone || '',
+            major: stored.major || '',
+            grade: stored.grade || '',
+          }
+          this.originalInfo = { ...this.userInfo }
+        }
+      }
+    },
+    async saveProfile() {
+      this.saving = true
+      try {
+        const res = await userApi.updateProfile({
+          email: this.userInfo.email,
+          phone: this.userInfo.phone,
+          major: this.userInfo.major,
+          grade: this.userInfo.grade,
+        })
+        // 同步更新 store
+        const updated = res.user || res
+        this.$store.commit('SET_USER', {
+          ...this.$store.getters.currentUser,
+          ...updated
+        })
+        this.originalInfo = { ...this.userInfo }
+        ElMessage.success('保存成功')
+      } catch (e) {
+        ElMessage.error(e.response?.data?.error || '保存失败，请重试')
+      } finally {
+        this.saving = false
+      }
+    },
+    resetForm() {
+      this.userInfo = { ...this.originalInfo }
+    }
   }
 }
 </script>

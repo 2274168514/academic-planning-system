@@ -86,13 +86,11 @@ export default {
     Calendar, ChatDotRound, TrendCharts, UserFilled,
     Bell, ArrowDown
   },
-  data() {
-    return {
-      username: '学习者'
-    }
-  },
   computed: {
-    ...mapGetters(['userInfo']),
+    ...mapGetters(['currentUser']),
+    username() {
+      return this.currentUser?.username || '学习者'
+    },
     avatarLetter() {
       return this.username ? this.username[0].toUpperCase() : 'U'
     }

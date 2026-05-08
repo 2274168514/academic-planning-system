@@ -63,7 +63,7 @@ export default {
         this.$router.push(redirect);
       } catch (error) {
         // 登录失败
-        ElMessage.error(error.response?.data?.message || "登录失败，请检查用户名和密码");
+        ElMessage.error(error.response?.data?.error || error.response?.data?.message || "登录失败，请检查用户名和密码");
       } finally {
         this.loading = false;
       }

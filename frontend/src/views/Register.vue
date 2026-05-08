@@ -77,7 +77,7 @@ export default {
         this.$router.push('/login');
       } catch (error) {
         // 注册失败
-        ElMessage.error(error.response?.data?.message || "注册失败，请稍后重试");
+        ElMessage.error(error.response?.data?.error || error.response?.data?.message || "注册失败，请稍后重试");
       } finally {
         this.loading = false;
       }
