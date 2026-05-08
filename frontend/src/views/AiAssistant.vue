@@ -20,7 +20,7 @@
         <div class="chat-header">
           <div class="assistant-info">
             <div class="assistant-avatar">
-              <img src="https://via.placeholder.com/40" alt="AI助手" />
+              <img src="@/assets/deepseek-icon.png" alt="DeepSeek" />
             </div>
             <div class="assistant-name">DeepSeek学习顾问 <span class="status-badge online">在线</span></div>
           </div>
@@ -51,10 +51,12 @@
             <div v-for="(message, index) in messages" :key="index" 
               :class="['message', message.from === 'ai' ? 'ai-message' : 'user-message']">
               <div class="message-avatar">
-                <img 
-                  :src="message.from === 'ai' ? 'https://via.placeholder.com/32' : 'https://via.placeholder.com/32?text=U'" 
-                  :alt="message.from === 'ai' ? 'AI' : '用户'" 
+                <img
+                  :src="message.from === 'ai' ? require('@/assets/deepseek-icon.png') : require('@/assets/deepseek-icon.png')"
+                  :alt="message.from === 'ai' ? 'AI' : '用户'"
+                  :style="message.from !== 'ai' ? 'display:none' : ''"
                 />
+                <div v-if="message.from !== 'ai'" class="user-initial">我</div>
               </div>
               <div class="message-content">
                 <div class="message-text" v-html="formatMessage(message.text)"></div>
@@ -64,7 +66,7 @@
             
             <div v-if="thinking" class="message ai-message thinking">
               <div class="message-avatar">
-                <img src="https://via.placeholder.com/32" alt="AI" />
+                <img src="@/assets/deepseek-icon.png" alt="AI" />
               </div>
               <div class="message-content">
                 <div class="thinking-indicator">
@@ -544,6 +546,18 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.user-initial {
+  width: 100%;
+  height: 100%;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .message-content {
