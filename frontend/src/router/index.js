@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
 // 路由页面
+const LandingPage = () => import('../views/LandingPage.vue')
 const Login = () => import('../views/Login.vue')
 const Register = () => import('../views/Register.vue')
 const Layout = () => import('../views/layout/Layout.vue')
@@ -17,6 +18,12 @@ const UserProfile = () => import('../views/UserProfile.vue')
 
 const routes = [
   {
+    path: '/',
+    name: 'LandingPage',
+    component: LandingPage,
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: Login,
@@ -29,7 +36,7 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/',
+    path: '/home',
     component: Layout,
     meta: { requiresAuth: true },
     children: [

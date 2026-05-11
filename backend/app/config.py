@@ -13,7 +13,7 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
     
     # DeepSeek API配置
-    DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', 'sk-ad1fcffa481446548fabe5cd40e52af5')
+    DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', '')
     DEEPSEEK_API_URL = os.getenv('DEEPSEEK_API_URL', 'https://api.deepseek.com/v1/chat/completions')
     DEEPSEEK_MODEL = os.getenv('DEEPSEEK_MODEL', 'deepseek-chat')
     
